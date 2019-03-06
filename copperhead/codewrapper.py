@@ -1,7 +1,14 @@
 import os
+import re
 import version
 
 module_template = '''// this code is automatically generated from cooperhead {version}
+#include <Python.h>
+
+//**************************************
+// this is the start injected code block
+{block}
+//**************************************
 
 // this method is the primary wrapper for the code block
 PyObject* py_{block_name}(PyObject*, PyObject*)
@@ -37,6 +44,5 @@ PyMODINIT_FUNC PyInit_{block_name}(void)
 def create(filename, block_name, block):
     source = os.path.join(filename)
     with open(source, 'w') as sf:
-        sf.write('#include <Python.h>\n')
-        sf.write(block)
-        sf.write(module_template.format(block_name=block_name, version=version.version))
+        sf.write(module_template.format(block_name=block_name, block=block, version=version.version))
+
