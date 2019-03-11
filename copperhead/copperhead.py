@@ -12,14 +12,14 @@ import version
 cache_dir = '.copperhead_cache'
 
 
-def generate(block_name, block, rebuild=False):
+def generate(block_name, block_signature, block, rebuild=False):
     this_cache_dir = os.path.abspath(os.path.join(cache_dir, block_name))
     os.makedirs(this_cache_dir, exist_ok=True)
 
     egg = _get_egg(this_cache_dir)
     if not egg or rebuild:
         source = os.path.abspath(os.path.join(this_cache_dir, block_name + '_block.cpp'))
-        codewrapper.create(source, block_name, block)
+        codewrapper.create(source, block_name, block_signature, block)
 
         setup = os.path.abspath(os.path.join(this_cache_dir, block_name + '_setup.py'))
         setupgenerator.create(setup, block_name, source)
