@@ -4,7 +4,6 @@ import version
 
 module_template = '''// this code is automatically generated from cooperhead {version}
 #include <Python.h>
-#include <iostream>
 #include <stdexcept>
 
 static PyObject *{block_name}Error;
@@ -106,7 +105,7 @@ def make_wrapper(block_name, block_signature):
     wrapper_body += '        {}{}({});\n'.format(return_value, block_name, ','.join(args))
 
     if return_type == 'void':
-        wrapper_body += '    Py_RETURN_NONE;\n'
+        wrapper_body += '        Py_RETURN_NONE;\n'
     else:
         if return_type in ['short', 'int', 'long']:
             wrapper_body += '        return PyLong_FromLong(return_value_raw);'
