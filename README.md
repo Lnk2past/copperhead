@@ -50,7 +50,7 @@ Breakdown:
 - Lastly, we call the function. 
 
 ### Mandelbrot
-What to generate the Mandelbrot Set? Awesome! You get to it and write a simple implementation to generate a file with the escape times:
+Want to generate the Mandelbrot Set? Awesome! You get to it and write a simple implementation to generate a file with the escape times:
 ```python
 def mandlebrot(c):
     max_iter = 100
