@@ -7,6 +7,12 @@ The primary interface for using ```copperhead``` is through the ```generate``` f
 ### Important!
 ```copperhead``` is great for prototyping and "what-if" exploration. I would not recommend using ```copperhead``` directly for production code and environments, but it is something that can aid in developing production/release grade modules and libraries. I am always wary of dynamically generated code in production, but to each their own.
 
+### More Important Things!
+I am coding this to work with latest Python and with modern C++ techniques. I have no interest in backwards compatibility. While earlier versions and standards may work right now, I do not guarantee any of that moving forward. I will not hinder development for the sake of supporting something older.
+
+- My development environment currently employs Python 3.6.7 and GCC 7.3.0
+- My development environment will move soon to Python 3.7.2 and GCC 8.3.2
+
 ## Motivation
 
 Why not just write C++ if you are going to write C++ anyway? Just write everything in Python; you did choose the language! Why bother mixing languges? Why not use any of the existing language binding generators? These are all valid questions.
@@ -50,7 +56,7 @@ Breakdown:
 - Lastly, we call the function. 
 
 ### Mandelbrot
-What to generate the Mandelbrot Set? Awesome! You get to it and write a simple implementation to generate a file with the escape times:
+Want to generate the Mandelbrot Set? Awesome! You get to it and write a simple implementation to generate a file with the escape times:
 ```python
 def mandlebrot(c):
     max_iter = 100
@@ -139,3 +145,5 @@ Lots:
     - link flags
     - additional includes
     - etc.
+- provide official benchmarking results between Python and C++
+
