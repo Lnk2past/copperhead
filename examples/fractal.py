@@ -24,7 +24,7 @@ void compute(std::string filename, double x, double y, double h)
     std::ofstream f(filename);
     for (long yidx {0}; yidx < n; ++yidx)
     {
-        for (long xidx = 0; xidx < n; ++xidx)
+        for (long xidx {0}; xidx < n; ++xidx)
         {
             f << mandelbrot(std::complex<double>(x, y)) << " ";
             x  += h;
