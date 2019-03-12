@@ -113,6 +113,8 @@ def make_wrapper(block_name, block_signature):
             wrapper_body += '        return PyLong_FromLongLong(return_value_raw);'
         elif return_type in ['float', 'double']:
             wrapper_body += '        return PyFloat_FromDouble(return_value_raw);'
+        elif return_type in ['std::string']:
+            wrapper_body += '        return PyUnicode_FromString(return_value_raw.c_str());'
 
     return wrapper_body
 
