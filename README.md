@@ -136,6 +136,8 @@ Before diving into evaluating this against our Python, do note that I decided to
 
 Running this you will see a good bit of jargon dumped to stdout: this is the creation of the C++ extension (running again, the cache is accessed and you will not see it). On my system this runs in ~9 seconds. 1:40 to 0:09. The improvements here become even greater as the problem space scales. While timing is hardly a valuble benchmark, the savings here are too great and too obvious to ignore.
 
+Note that the example code in this repository uses ```h = 0.005``` to reduce the runtime during testing.
+
 ## TODO
 Lots:
 - more readme updates
