@@ -36,4 +36,4 @@ void compute(std::string filename, double x, double y, double h)
 }'''
 
 compute = cpp.generate('compute', 'void(std::string, double, double, double)', mandelbrot_cpp)
-compute('fractal.dat', -2.0, 1.25, 0.0005)
+compute('fractal.dat', -2.0, 1.25, 0.005)
