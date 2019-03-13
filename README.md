@@ -1,7 +1,5 @@
 # copperhead
 
-## Build Status
-
 [![Build Status](https://travis-ci.org/Lnk2past/copperhead.svg?branch=master)](https://travis-ci.org/Lnk2past/copperhead)
 
 ## Introduction
