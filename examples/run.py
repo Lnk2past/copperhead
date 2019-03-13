@@ -44,22 +44,27 @@ void bad()
    throw std::runtime_error("You broke me!");
 }'''
 
-
+# testing simple output
 hello_world = cpp.generate('hello_world', 'void()', test1)
 hello_world()
 
+# testing passing and returning ints
 fibonacci = cpp.generate('fibonacci', 'int(int)', test2)
 print(fibonacci(6))
 
+# testing passing and returning ints
 sum = cpp.generate('sum', 'int(int, int)', test3)
 print(sum(6, 10))
 
+# testing passing and returning doubles
 average3 = cpp.generate('average3', 'double(double, double, double)', test4)
 print(average3(1.0, 2.0, 4.5))
 
+# tsting passing strings
 greet = cpp.generate('greet', 'void(std::string)', test5)
 greet('bob')
 
+# testing exceptions
 badfunc = cpp.generate('bad', 'void()', test6)
 import bad
 try:
