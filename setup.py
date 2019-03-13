@@ -1,10 +1,10 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 from copperhead import version
 
 setup(
     name='copperhead',
     version=version.version,
-    packages=find_packages(),
+    packages=['copperhead'],
     author='Lnk2past',
     description='An Inline C++ Extension Generator for Python',
     license='MIT',
