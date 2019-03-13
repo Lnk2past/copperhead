@@ -2,6 +2,7 @@ import os
 import re
 import version
 
+
 module_template = '''// this code is automatically generated from cooperhead {version}
 #include <Python.h>
 #include <stdexcept>
@@ -63,10 +64,19 @@ PyMODINIT_FUNC PyInit_{block_name}(void)
     return m;
 }}'''
 
+
 type_map = {
     'std::string': 's',
     'char*': 's',
+    'unsigned char': 'b',
+    'short': 'h',
+    'unsigned short': 'H',
     'int': 'i',
+    'unsigned int': 'I',
+    'long': 'l',
+    'unsigned long': 'k',
+    'long long': 'L',
+    'unsigned long long': 'K',
     'float': 'f',
     'double': 'd',
 }
@@ -111,6 +121,10 @@ def make_wrapper(block_name, block_signature):
             wrapper_body += '        return PyLong_FromLong(return_value_raw);'
         elif return_type == 'long long':
             wrapper_body += '        return PyLong_FromLongLong(return_value_raw);'
+        if return_type in ['unsigned char', 'unsigned short', 'unsigned int', 'unsigned long']:
+            wrapper_body += '        return PyLong_FromUnsignedLong(return_value_raw);'
+        elif return_type == 'unsigned long long':
+            wrapper_body += '        return PyLong_FromUnsignedLongLong(return_value_raw);'
         elif return_type in ['float', 'double']:
             wrapper_body += '        return PyFloat_FromDouble(return_value_raw);'
         elif return_type in ['std::string']:
