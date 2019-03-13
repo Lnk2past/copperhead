@@ -138,6 +138,10 @@ Running this you will see a good bit of jargon dumped to stdout: this is the cre
 
 Note that the example code in this repository uses ```h = 0.005``` to reduce the runtime during testing.
 
+## License
+
+See [LICENSE.md](LICENSE.md) for the specifics, but it is an MIT license.
+
 ## TODO
 Lots:
 - more readme updates
