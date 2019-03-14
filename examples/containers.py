@@ -44,14 +44,14 @@ test4 = r'''
 #include <deque>
 #include <iostream>
 #include <queue>
-void qs(std::deque<int> deq, std::queue<int> c1)
+void qs(std::deque<double> deq, std::queue<double> c1)
 {
     std::cout << c1.size() << '\n';
  
-    std::queue<int> c2(c1);
+    std::queue<double> c2(c1);
     std::cout << c2.size() << '\n';
  
-    std::queue<int> c3(deq);
+    std::queue<double> c3(deq);
     std::cout << c3.size() << '\n';
 }'''
 
@@ -64,5 +64,5 @@ print(vsum([1, 2, 3, 4], [5, 6, 7, 8, 9]))
 vcsum = cpp.generate('vcsum', 'std::vector<int>(std::vector<int>)', test3)
 print(vcsum([1, 2, 3, 4]))
 
-qs = cpp.generate('qs', 'void(std::deque<int>, std::queue<int>)', test4)
-qs([3, 1, 4, 1, 5], [5])
+qs = cpp.generate('qs', 'void(std::deque<double>, std::queue<double>)', test4)
+qs([3.14, 1.41, 4.15, 1.59, 5.92], [5.0001])

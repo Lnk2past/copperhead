@@ -12,56 +12,62 @@ def parse_template(full_type):
 
 to_python_list_template = r'''
         PyObject* return_value_list = PyList_New(return_value_raw.size());
-        if (!return_value_list) PyErr_SetString({block_name}Error, "Could not allocate a new Python list!");
+        if (!return_value_list)
+        {{
+            PyErr_SetString({block_name}Error, "Could not allocate a new Python list!");
+            return nullptr;
+        }}
         Py_ssize_t pos {{0}};
         for (auto & element : return_value_raw)
         {{
-            PyList_SetItem(return_value_list, pos, {conversion}(element));
+            PyList_SET_ITEM(return_value_list, pos, {conversion}(element));
             ++pos;
         }}
         return return_value_list;
 '''
+
 
 from_python_list_template = r'''
         {arg_type} {name}_container;
         for (Py_ssize_t i {{0}}; i < PyList_Size({name}); i++)
         {{
             PyObject *value = PyList_GetItem({name}, i);
-            {name}_container.{insertion_function}( PyLong_AsLong(value) );
+            {name}_container.{insertion_function}( {from_python_function}(value) );
         }}
 '''
 
 
 class TypeConversion:
-    def __init__(self, cpp_type, format_unit, to_python_conversion_function, c_type=None, insertion_function=None ):
+    def __init__(self, cpp_type, format_unit, to_python_function=None, from_python_function=None, c_type=None, insertion_function=None ):
         self.cpp_type = cpp_type
         self.c_type = c_type if c_type else cpp_type
         self.format_unit = format_unit
-        self.to_python_conversion_function = to_python_conversion_function
+        self.to_python_function = to_python_function
+        self.from_python_function = from_python_function
         self.insertion_function = insertion_function
 
 
 basic_types = {
-    'short': TypeConversion('short', 'h', 'PyLong_FromLong'),
-    'int': TypeConversion('int', 'i', 'PyLong_FromLong'),
-    'long': TypeConversion('long', 'l', 'PyLong_FromLong'),
-    'long long': TypeConversion('long long', 'L', 'PyLong_FromLongLong'),
-    'unsigned char': TypeConversion('unsigned char', 'b', 'PyLong_FromUnsignedLong'),
-    'unsigned short': TypeConversion('unsigned short', 'H', 'PyLong_FromUnsignedLong'),
-    'unsigned int': TypeConversion('unsigned int', 'I', 'PyLong_FromUnsignedLong'),
-    'unsigned long': TypeConversion('unsigned long', 'k', 'PyLong_FromUnsignedLong'),
-    'unsigned long long': TypeConversion('unsigned long long', 'K', 'PyLong_FromLongUnsignedLong'),
-    'float': TypeConversion('float', 'f', 'PyFloat_FromDouble'),
-    'double': TypeConversion('double', 'd', 'PyFloat_FromDouble'),
+    'short': TypeConversion('short', 'h', 'PyLong_FromLong', 'PyLong_AsLong'),
+    'int': TypeConversion('int', 'i', 'PyLong_FromLong', 'PyLong_AsLong'),
+    'long': TypeConversion('long', 'l', 'PyLong_FromLong', 'PyLong_AsLong'),
+    'long long': TypeConversion('long long', 'L', 'PyLong_FromLongLong', 'PyLong_AsLongLong'),
+    'unsigned char': TypeConversion('unsigned char', 'b', 'PyLong_FromUnsignedLong', 'PyLong_AsUnsignedLong'),
+    'unsigned short': TypeConversion('unsigned short', 'H', 'PyLong_FromUnsignedLong', 'PyLong_AsUnsignedLong'),
+    'unsigned int': TypeConversion('unsigned int', 'I', 'PyLong_FromUnsignedLong', 'PyLong_AsUnsignedLong'),
+    'unsigned long': TypeConversion('unsigned long', 'k', 'PyLong_FromUnsignedLong', 'PyLong_AsUnsignedLong'),
+    'unsigned long long': TypeConversion('unsigned long long', 'K', 'PyLong_FromLongUnsignedLong', 'PyLong_AsUnsignedLongLong'),
+    'float': TypeConversion('float', 'f', 'PyFloat_FromDouble', 'PyFloat_AsDouble'),
+    'double': TypeConversion('double', 'd', 'PyFloat_FromDouble', 'PyFloat_AsDouble'),
     'std::string': TypeConversion('std::string', 's', 'PyUnicode_FromString', c_type='char*'),
 }
 
 
 cpp_types = {
-    'std::list': TypeConversion('std::list', 'O', to_python_list_template, c_type='PyObject*', insertion_function='push_back'),
-    'std::vector': TypeConversion('std::vector', 'O', to_python_list_template, c_type='PyObject*', insertion_function='push_back'),
-    'std::queue': TypeConversion('std::queue', 'O', to_python_list_template, c_type='PyObject*', insertion_function='push'),
-    'std::deque': TypeConversion('std::deque', 'O', to_python_list_template, c_type='PyObject*', insertion_function='push_back'),
+    'std::list': TypeConversion('std::list', 'O', c_type='PyObject*', insertion_function='push_back'),
+    'std::vector': TypeConversion('std::vector', 'O', c_type='PyObject*', insertion_function='push_back'),
+    'std::queue': TypeConversion('std::queue', 'O', c_type='PyObject*', insertion_function='push'),
+    'std::deque': TypeConversion('std::deque', 'O', c_type='PyObject*', insertion_function='push_back'),
 }
 
 
@@ -101,8 +107,13 @@ def _make_wrapper(block_name, block_signature):
 
         for conversion_arg in conversion_args:
             name, arg_type, cpp_type = conversion_arg
+            template_type = parse_template(arg_type)
+            while template_type not in basic_types:
+                template_type = parse_template(template_type)
+            from_python_function = basic_types[template_type].from_python_function
+
             insertion_function = cpp_types[cpp_type].insertion_function
-            wrapper_body += from_python_list_template.format(arg_type=arg_type, name=name, insertion_function=insertion_function)
+            wrapper_body += from_python_list_template.format(arg_type=arg_type, name=name, from_python_function=from_python_function, insertion_function=insertion_function)
             args[args.index(name)] = '{name}_container'.format(name=name)
 
     return_value = ''
@@ -115,14 +126,14 @@ def _make_wrapper(block_name, block_signature):
         wrapper_body += '        Py_RETURN_NONE;'
     else:
         if return_type in basic_types:
-            wrapper_body += '        return {}(return_value_raw);'.format(basic_types[return_type].to_python_conversion_function)
+            wrapper_body += '        return {}(return_value_raw);'.format(basic_types[return_type].to_python_function)
         elif return_type == 'std::string':
-            wrapper_body += '        return {}(return_value_raw.c_str());'.format(cpp_types[return_type].to_python_conversion_function)
+            wrapper_body += '        return {}(return_value_raw.c_str());'.format(cpp_types[return_type].to_python_function)
         else:
             template_type = parse_template(return_type)
             while template_type not in basic_types:
                 template_type = parse_template(template_type)
-            wrapper_body += to_python_list_template.format(block_name=block_name, conversion=basic_types[template_type].to_python_conversion_function)
+            wrapper_body += to_python_list_template.format(block_name=block_name, conversion=basic_types[template_type].to_python_function)
 
     return wrapper_body
 
