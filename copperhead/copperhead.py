@@ -4,9 +4,8 @@ import os
 import setuptools.sandbox
 import sys
 
-import codewrapper
-import setupgenerator
-import version
+import copperhead.codewrapper
+import copperhead.setupgenerator
 
 
 cache_dir = '.copperhead_cache'
@@ -19,11 +18,13 @@ def generate(block_name, block_signature, block, rebuild=False):
     egg = _get_egg(this_cache_dir)
     if not egg or rebuild:
         source = os.path.abspath(os.path.join(this_cache_dir, block_name + '_block.cpp'))
-        codewrapper.create(source, block_name, block_signature, block)
+        copperhead.codewrapper.create(source, block_name, block_signature, block)
 
         setup = os.path.abspath(os.path.join(this_cache_dir, block_name + '_setup.py'))
-        setupgenerator.create(setup, block_name, source)
+        copperhead.setupgenerator.create(setup, block_name, source)
 
+        if 'PYTHONPATH' not in os.environ:
+            os.environ['PYTHONPATH'] = ''
         os.environ['PYTHONPATH'] += ':{}'.format(this_cache_dir)
 
         setuptools.sandbox.run_setup(setup, args=['install',

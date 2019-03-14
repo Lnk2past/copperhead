@@ -1,13 +1,17 @@
-from setuptools import setup
-from copperhead import version
+import os
+from setuptools import setup, find_packages
+
+about = {}
+here = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(here, 'copperhead', '__version__.py'), 'r') as f:
+    exec(f.read(), about)
 
 setup(
-    name='copperhead',
-    version=version.version,
-    packages=['copperhead'],
-    author='Lnk2past',
-    description='An Inline C++ Extension Generator for Python',
-    license='MIT',
-    keywords='cpp cpluscplus c++ extension',
-    url='https://github.com/Lnk2past/copperhead'
+    name=about['__title__'],
+    version=about['__version__'],
+    packages=find_packages(),
+    author=about['__author__'],
+    description=about['__description__'],
+    license=about['__license__'],
+    url=about['__url__']
 )
