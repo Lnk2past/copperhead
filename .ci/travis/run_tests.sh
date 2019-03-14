@@ -1,2 +1,2 @@
-PYTHONPATH=copperhead python3 examples/run.py
-PYTHONPATH=copperhead python3 examples/fractal.py
+python3 examples/run.py
+python3 examples/fractal.py
