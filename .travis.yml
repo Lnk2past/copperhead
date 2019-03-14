@@ -11,6 +11,6 @@ addons:
   apt:
     update: true
 install:
-  - python setup.py install
+  - python3 setup.py install
 script:
   - .ci/travis/run_tests.sh
