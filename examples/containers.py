@@ -55,6 +55,22 @@ void qs(std::deque<double> deq, std::queue<double> c1)
     std::cout << c3.size() << '\n';
 }'''
 
+test5 = r'''
+#include <iostream>
+#include <vector>
+void vprint2d(std::vector<std::vector<int>> v)
+{
+    for (auto r : v)
+    {
+        for (auto i : r)
+        {
+            std::cout << i << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+}'''
+
 vprint = cpp.generate('vprint', 'void(std::vector<int>)', test1)
 vprint([1, 2, 3, 4])
 
@@ -66,3 +82,6 @@ print(vcsum([1, 2, 3, 4]))
 
 qs = cpp.generate('qs', 'void(std::deque<double>, std::queue<double>)', test4)
 qs([3.14, 1.41, 4.15, 1.59, 5.92], [5.0001])
+
+vprint2d = cpp.generate('vprint2d', 'void(std::vector<std::vector<int>>)', test5)
+vprint2d([[0,1,2], [3,4,5], [6,7,8]])

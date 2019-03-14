@@ -28,23 +28,45 @@ to_python_list_template = r'''
 
 
 from_python_list_template = r'''
-        {arg_type} {name}_container;
-        for (Py_ssize_t i {{0}}; i < PyList_Size({name}); i++)
-        {{
-            PyObject *value = PyList_GetItem({name}, i);
-            {name}_container.{insertion_function}( {from_python_function}(value) );
-        }}
+        {{arg_type}} {{name}}_container;
+        for (Py_ssize_t i{{idx}} {{{{0}}}}; i{{idx}} < PyList_Size({{name}}); i{{idx}}++)
+        {{{{
+            {{name}}_container.{{insertion_function}}();
+            auto &value{{idx}} = {{name}}_container.back();
+            {nest}
+        }}}}
+'''
+
+from_python_list_inner_template = r'''
+            PyObject *pyvalue = PyList_GetItem({name}, i{idx});
+            value{{idx}} = {from_python_function}(pyvalue);
 '''
 
 
+def convert_container_from_python(name, arg_type, cpp_type, idx):
+    template_type = parse_template(arg_type)
+    nest = from_python_list_inner_template
+    if template_type not in basic_types:
+        block = convert_container_from_python(name, template_type, cpp_type, idx+1)
+        
+
+    from_python_function = basic_types[template_type].from_python_function
+    insertion_function = cpp_types[cpp_type].insertion_function
+    block = from_python_list_template.format(nest=nest.format(name=name, idx=idx, from_python_function=from_python_function))
+    return block.format(arg_type=arg_type, name=name, insertion_function=insertion_function, idx=idx)
+
+
+
+
 class TypeConversion:
-    def __init__(self, cpp_type, format_unit, to_python_function=None, from_python_function=None, c_type=None, insertion_function=None ):
+    def __init__(self, cpp_type, format_unit, to_python_function=None, from_python_function=None, c_type=None, insertion_function=None, reserve=None ):
         self.cpp_type = cpp_type
         self.c_type = c_type if c_type else cpp_type
         self.format_unit = format_unit
         self.to_python_function = to_python_function
         self.from_python_function = from_python_function
         self.insertion_function = insertion_function
+        self.reserve = reserve
 
 
 basic_types = {
@@ -64,10 +86,10 @@ basic_types = {
 
 
 cpp_types = {
-    'std::list': TypeConversion('std::list', 'O', c_type='PyObject*', insertion_function='push_back'),
-    'std::vector': TypeConversion('std::vector', 'O', c_type='PyObject*', insertion_function='push_back'),
-    'std::queue': TypeConversion('std::queue', 'O', c_type='PyObject*', insertion_function='push'),
-    'std::deque': TypeConversion('std::deque', 'O', c_type='PyObject*', insertion_function='push_back'),
+    'std::list': TypeConversion('std::list', 'O', c_type='PyObject*', insertion_function='emplace_back'),
+    'std::vector': TypeConversion('std::vector', 'O', c_type='PyObject*', insertion_function='emplace_back', reserve='reserve'),
+    'std::queue': TypeConversion('std::queue', 'O', c_type='PyObject*', insertion_function='emplace'),
+    'std::deque': TypeConversion('std::deque', 'O', c_type='PyObject*', insertion_function='emplace_back'),
 }
 
 
@@ -107,13 +129,18 @@ def _make_wrapper(block_name, block_signature):
 
         for conversion_arg in conversion_args:
             name, arg_type, cpp_type = conversion_arg
-            template_type = parse_template(arg_type)
-            while template_type not in basic_types:
-                template_type = parse_template(template_type)
-            from_python_function = basic_types[template_type].from_python_function
 
-            insertion_function = cpp_types[cpp_type].insertion_function
-            wrapper_body += from_python_list_template.format(arg_type=arg_type, name=name, from_python_function=from_python_function, insertion_function=insertion_function)
+            # what about nested containers?!
+            # template_type = parse_template(arg_type)
+            # while template_type not in basic_types:
+            #     template_type = parse_template(template_type)
+            # from_python_function = basic_types[template_type].from_python_function
+
+            # insertion_function = cpp_types[cpp_type].insertion_function
+            # wrapper_body += from_python_list_template.format(arg_type=arg_type, name=name, from_python_function=from_python_function, insertion_function=insertion_function)
+
+            wrapper_body += convert_container_from_python(name, arg_type, cpp_type, 0)
+
             args[args.index(name)] = '{name}_container'.format(name=name)
 
     return_value = ''
@@ -130,10 +157,13 @@ def _make_wrapper(block_name, block_signature):
         elif return_type == 'std::string':
             wrapper_body += '        return {}(return_value_raw.c_str());'.format(cpp_types[return_type].to_python_function)
         else:
+            # what about nested containers?!
             template_type = parse_template(return_type)
             while template_type not in basic_types:
                 template_type = parse_template(template_type)
-            wrapper_body += to_python_list_template.format(block_name=block_name, conversion=basic_types[template_type].to_python_function)
+            to_python_function = basic_types[template_type].to_python_function
+
+            wrapper_body += to_python_list_template.format(block_name=block_name, conversion=to_python_function)
 
     return wrapper_body
 
