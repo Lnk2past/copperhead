@@ -45,31 +45,41 @@ void bad()
 }'''
 
 # testing simple output
+print('Test 1')
 hello_world = cpp.generate('hello_world', 'void()', test1)
 hello_world()
+print('')
 
 # testing passing and returning ints
+print('Test 2')
 fibonacci = cpp.generate('fibonacci', 'int(int)', test2)
 print(fibonacci(6))
+print('')
 
 # testing passing and returning ints
+print('Test 3')
 sum = cpp.generate('sum', 'int(int, int)', test3)
 print(sum(6, 10))
+print('')
 
 # testing passing and returning doubles
+print('Test 4')
 average3 = cpp.generate('average3', 'double(double, double, double)', test4)
 print(average3(1.0, 2.0, 4.5))
+print('')
 
-# tsting passing strings
+# testing passing strings
+print('Test 5')
 greet = cpp.generate('greet', 'void(std::string)', test5)
 greet('bob')
+print('')
 
 # testing exceptions
+print('Test 6')
 badfunc = cpp.generate('bad', 'void()', test6)
 import bad
 try:
    badfunc()
 except bad.error as e:
    print('Got some weird error...', e)
-
-
+print('')

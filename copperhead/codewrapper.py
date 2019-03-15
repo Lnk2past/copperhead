@@ -10,7 +10,7 @@ def parse_template(full_type):
     return (template_type_re.search(full_type).group(1), template_type_re.search(full_type).group(2))
 
 
-to_python_list_template = r'''
+to_python_list_template2 = r'''
         PyObject* return_value_list = PyList_New(return_value_raw.size());
         if (!return_value_list)
         {{
@@ -25,6 +25,54 @@ to_python_list_template = r'''
         }}
         return return_value_list;
 '''
+
+to_python_list_template = r'''
+        Py_ssize_t pos{layer_index} {{0}};
+        for (auto & return_value_raw{layer_index} : return_value_raw{previous_layer_index})
+        {{
+            <next_layer>
+            <finalize_set>
+            ++pos{layer_index};
+        }}
+'''
+
+
+to_python_list_intermediate_template = r'''
+        PyObject* return_value_list{next_layer_index} = PyList_New(return_value_raw{layer_index}.size());
+'''
+
+to_python_list_intermediate_template_2 = r'''
+        PyList_SET_ITEM(return_value_list{layer_index}, pos{layer_index}, return_value_list{next_layer_index});
+'''
+
+to_python_list_inner_template = r'''
+            PyObject *pyvalue = {to_python_function}(return_value_raw{layer_index});
+            PyList_SET_ITEM(return_value_list{layer_index}, pos{layer_index}, pyvalue);
+'''
+
+
+def convert_container_to_python(arg_type, layer_index, block=to_python_list_template):
+    previous_layer_index = '' if (layer_index in ['', 1]) else layer_index-1
+    next_layer_index = 1 if not layer_index else layer_index+1
+
+    container, template_type = parse_template(arg_type)
+    insertion_function = cpp_types[container].insertion_function
+
+    block = block.format(previous_layer_index=previous_layer_index, layer_index=layer_index, next_layer_index=next_layer_index, insertion_function=insertion_function)
+    block = block.replace('}', '}}').replace('{', '{{')
+
+    if template_type not in basic_types:
+        new_layer_type = to_python_list_intermediate_template.format(layer_index=layer_index, next_layer_index=next_layer_index)
+        block = block.replace('<next_layer>', new_layer_type + to_python_list_template)
+        block = convert_container_to_python(template_type, next_layer_index, block)
+        block = block.replace('<finalize_set>', to_python_list_intermediate_template_2.format(layer_index=layer_index, next_layer_index=next_layer_index))
+    else:
+        to_python_function = basic_types[template_type].to_python_function
+        block = block.replace('<next_layer>', to_python_list_inner_template.format(layer_index=layer_index, next_layer_index=next_layer_index, to_python_function=to_python_function))
+        block = block.replace('<finalize_set>', '', 1)
+        return block
+
+    return block
 
 
 from_python_list_template = r'''
@@ -49,7 +97,7 @@ from_python_list_inner_template = r'''
 '''
 
 
-def convert_container_from_python(name, arg_type, cpp_type, layer_index, block=from_python_list_template):
+def convert_container_from_python(name, arg_type, layer_index, block=from_python_list_template):
     next_layer_index = 1 if not layer_index else layer_index+1
 
     container, template_type = parse_template(arg_type)
@@ -61,7 +109,7 @@ def convert_container_from_python(name, arg_type, cpp_type, layer_index, block=f
     if template_type not in basic_types:
         new_layer_type = from_python_list_intermediate_template.format(name=name, layer_index=layer_index, next_layer_index=next_layer_index)
         block = block.replace('<next_layer>', new_layer_type + from_python_list_template)
-        block = convert_container_from_python(name, template_type, container, next_layer_index, block)
+        block = convert_container_from_python(name, template_type, next_layer_index, block)
     else:
         from_python_function = basic_types[template_type].from_python_function
         block = block.replace('<next_layer>', from_python_list_inner_template.format(name=name, layer_index=layer_index, next_layer_index=next_layer_index, from_python_function=from_python_function))
@@ -128,7 +176,7 @@ def _make_wrapper(block_name, block_signature):
                     if arg_type.startswith(cpp_type):
                         format_str += cpp_types[cpp_type].format_unit
                         python_type = cpp_types[cpp_type].c_type
-                        conversion_args.append((chr(arg_name), arg_type, cpp_type))
+                        conversion_args.append((chr(arg_name), arg_type))
                         break
 
             wrapper_body += '        {} {};\n'.format(python_type, chr(arg_name))
@@ -140,17 +188,17 @@ def _make_wrapper(block_name, block_signature):
         wrapper_body += '        if (!PyArg_ParseTuple(args, "{}", {})) return NULL;\n'.format(format_str, args_str)
 
         for conversion_arg in conversion_args:
-            name, arg_type, cpp_type = conversion_arg
+            name, arg_type = conversion_arg
 
-            block = '        {arg_type} {name}_container;\n'.format(arg_type=arg_type, name=name) 
-            block += convert_container_from_python(name, arg_type, cpp_type, '')
+            block = '        {arg_type} {name}_container;\n'.format(arg_type=arg_type, name=name)
+            block += convert_container_from_python(name, arg_type, '')
             wrapper_body += block.format()
 
             args[args.index(name)] = '{name}_container'.format(name=name)
 
     return_value = ''
     if return_type != 'void':
-        return_value = '{} return_value_raw = '.format(return_type)
+        return_value = 'auto return_value_raw = '
 
     wrapper_body += '        {}{}({});\n'.format(return_value, block_name, ','.join(args))
 
@@ -162,13 +210,14 @@ def _make_wrapper(block_name, block_signature):
         elif return_type == 'std::string':
             wrapper_body += '        return {}(return_value_raw.c_str());'.format(cpp_types[return_type].to_python_function)
         else:
-            # what about nested containers?!
-            container, template_type = parse_template(return_type)
-            while template_type not in basic_types:
-                container, template_type = parse_template(template_type)
-            to_python_function = basic_types[template_type].to_python_function
+            for cpp_type in cpp_types.keys():
+                if return_type.startswith(cpp_type):
+                    break
 
-            wrapper_body += to_python_list_template.format(block_name=block_name, conversion=to_python_function)
+            block = '        PyObject* return_value_list = PyList_New(return_value_raw.size());'
+            block += convert_container_to_python(return_type, '')
+            wrapper_body += block.format()
+            wrapper_body += '        return return_value_list;'
 
     return wrapper_body
 
