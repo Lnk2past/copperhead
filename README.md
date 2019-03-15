@@ -8,6 +8,15 @@
 
 The primary interface for using ```copperhead``` is through the ```generate``` function. Simply pass in the name fo the function and the block of code you need to build into a module.
 
+## Installation
+
+Currently working to get this onto PyPI, but for now you can clone and install via ```setup.py```
+```
+python setup.py install
+```
+
+That is it! ```copperhead``` will use the compiler that was used to build your Python installation, and so on older systems you may run into isues until I implement a way to pass compiler flags in (to perhaps revert the C++ standard to something older; right now defaults to C++14).
+
 ## Motivation
 
 Why not just write C++ if you are going to write C++ anyway? Just write everything in Python; you did choose the language! Why bother mixing languges? Why not use any of the existing language binding generators? These are all valid questions.
