@@ -20,6 +20,23 @@ When you are done using ```copperhead``` you are left with the raw *C++ and setu
 
 So... why not just write C++? The answer is simple. Maybe your project really is better suited for Python, save some particular performance critical areas. By all means, write your program in Python if that is the language that suits it best. I am not here to tell you what languages to use or not use for your projects.
 
+## How It Works
+
+### Code Generation
+
+```copperhead``` works by automatically wrapping your C++ code in a new Python API enabled function and pairing it with the necessary code to pack it into a module that is compatible with Python. There are three primary steps to this process:
+1. Generate the function wrapper
+2. Generate the module
+3. Generate the setup script
+
+Once we have those three things, we can use ```setuptools``` to install the module using the setup script we generated. This is the entire process at a high level; it gets a little sticky under the hood. In order to generate the wrapping function (and thus the module) we need to know the name and prototype of the function. ```copperhead``` will not try to parse out the function's name and prototype because one _could_ provide multiple functions in a single block (see the Mandelbrot example). The function prototype is formatted as it would be in a ```std::function``` template. 
+
+From here ```copperhead``` will examine the types of the parameters and the return and generate the necessary code for each of those types. Typenames are mapped to a few pieces of additional data (namely what their format unit, any additional type conversions, and functions from the Python C API to convert between types). STL types have a little bit more data to describe how to insert data into them. STL containers may be nested, and so ```copperhead``` will iterate across structures converting to or from a PyListObject (depending on if the variable is an input or the return).
+
+### Installing & Importing C++ Modules
+
+Once the code is all generated ```copperhead``` will use ```setuptools``` to run the newly created setup script (_setup.py_). It is currently implemented to dump the new modules locally in a directory named _.copperhead_cache_. Your path will be adjusted as needed to include the newly generated eggs. If the eggs already exist, this process is skipped and you will simply import what is already available. The egg's path is added to sys.path and is imported by name; once it is imported the function specified is retreived and returned.
+
 ## Examples
 ### Hello World!
 Here is a simple example showing how to create your typical *Hello World!* program:
@@ -40,17 +57,14 @@ hello_world()
 ```
 
 #### Breakdown:
+
 - import ```copperhead```; we import ```as cpp``` for simple use
 - The string ```hello_world_cpp``` contains raw C++ source. While not valid as a standalone C++ executable (no *main* function), this is perfectly fine for library code.
-- We can then call ```cpp.generate```, passing in the name of the function, its signature, and then the code block itself. This will perform the following:
-   - Autogenerate the Python bindings for the code
-   - Autogenerate the ```setup.py``` for the extension
-   - Build the extensions and install it in a local cache
-   - Update your paths to include the newly generated extension
-   - Return a handle to the function
+- We can then call ```cpp.generate```, passing in the name of the function, its signature, and then the code block itself. This will generate a new Python module and return your function.
 - Lastly, we call the function. 
 
 ### Mandelbrot
+
 Want to generate the Mandelbrot Set? Awesome! You get to it and write a simple implementation to generate a file with the escape times:
 ```python
 def mandlebrot(c):
@@ -152,7 +166,9 @@ Lots:
 - dynamically generate wrapping function
    - support more simple types (various char types?)
    - support STL container converions (std::map, std::unordered_map, std::array)
+   - support cv-qualifiers, pointers & references
    - improve error handling
+- add support to expose more than 1 function per call to generate
 - develop uniqueness in cache rather than basing on name
 - add configurable options
     - compiler flags
