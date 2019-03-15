@@ -28,17 +28,17 @@ to_python_list_template = r'''
 
 
 from_python_list_template = r'''
-        for (Py_ssize_t i{pidx} {{0}}; i{pidx} < PyList_Size({name}{pidx}); i{pidx}++)
+        for (Py_ssize_t i{idx} {{0}}; i{idx} < PyList_Size({name}{idx}); i{idx}++)
         {{
-            {name}_container{pidx}.{insertion_function}();
-            auto &{name}_container{nidx} = {name}_container{pidx}.back();
+            {name}_container{idx}.{insertion_function}();
+            auto &{name}_container{nidx} = {name}_container{idx}.back();
             nest
         }}
 '''
 
 
 from_python_list_inner_template = r'''
-            PyObject *pyvalue = PyList_GetItem({name}{pidx}, i{pidx});
+            PyObject *pyvalue = PyList_GetItem({name}{idx}, i{idx});
             {name}_container{nidx} = {from_python_function}(pyvalue);
 '''
 
@@ -50,21 +50,24 @@ def convert_container_from_python(name, arg_type, cpp_type, idx, block=from_pyth
     pidx = '' if (idx==1 or idx == '') else idx-1
     nidx = 1 if idx == '' else idx+1
 
-    block = block.format(arg_type=arg_type, name=name, nidx=nidx, pidx=pidx, insertion_function=insertion_function)
+    block = block.format(arg_type=arg_type, name=name, idx=idx, nidx=nidx, insertion_function=insertion_function)
     block = block.replace('}', '}}').replace('{', '{{')
 
+    preblock = '        {arg_type} {name}_container{pidx};\n'.format(arg_type=arg_type, name=name, pidx=pidx) if not idx else ''
+
     if template_type not in basic_types:
+        blockbody = 'PyObject* {name}{nidx} = PyList_GetItem({name}{idx}, i{idx});\n'.format(name=name, idx=idx, pidx=pidx, nidx=nidx)
         idx = nidx
-        preblock = '        {arg_type} {name}_container{pidx};'.format(arg_type=arg_type, name=name, pidx=pidx)
-        blockbody = '        PyObject* {name}{idx} = PyList_GetItem({name}{pidx}, i{pidx});\n'.format(name=name, idx=idx, pidx=pidx)
 
         block = preblock + block.replace('nest', blockbody + from_python_list_template)
-        block = convert_container_from_python(name, template_type, container, idx+1, block)
+        block = convert_container_from_python(name, template_type, container, nidx, block)
     else:
         from_python_function = basic_types[template_type].from_python_function
-        block = block.replace('nest', from_python_list_inner_template.format(name=name, idx=idx, nidx=nidx, pidx=pidx, from_python_function=from_python_function))
+        block = preblock + block.replace('nest', from_python_list_inner_template.format(name=name, idx=idx, nidx=nidx, pidx=pidx, from_python_function=from_python_function))
         return block
-    return block.format()
+
+    print('=========\n{}\n========='.format(block))
+    return block
 
 
 class TypeConversion:
@@ -139,17 +142,8 @@ def _make_wrapper(block_name, block_signature):
         for conversion_arg in conversion_args:
             name, arg_type, cpp_type = conversion_arg
 
-            # what about nested containers?!
-            # template_type = parse_template(arg_type)
-            # while template_type not in basic_types:
-            #     template_type = parse_template(template_type)
-            # from_python_function = basic_types[template_type].from_python_function
-
-            # insertion_function = cpp_types[cpp_type].insertion_function
-            # wrapper_body += from_python_list_template.format(arg_type=arg_type, name=name, from_python_function=from_python_function, insertion_function=insertion_function)
-
             block = convert_container_from_python(name, arg_type, cpp_type, '')
-            wrapper_body += block
+            wrapper_body += block.format()
 
             print(block)
 
@@ -170,9 +164,9 @@ def _make_wrapper(block_name, block_signature):
             wrapper_body += '        return {}(return_value_raw.c_str());'.format(cpp_types[return_type].to_python_function)
         else:
             # what about nested containers?!
-            template_type = parse_template(return_type)
+            container, template_type = parse_template(return_type)
             while template_type not in basic_types:
-                template_type = parse_template(template_type)
+                container, template_type = parse_template(template_type)
             to_python_function = basic_types[template_type].to_python_function
 
             wrapper_body += to_python_list_template.format(block_name=block_name, conversion=to_python_function)
