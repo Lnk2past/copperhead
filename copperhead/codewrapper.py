@@ -6,8 +6,8 @@ from .templates.basic_wrapper import template
 
 
 def parse_template(full_type):
-    template_type_re = re.compile('<(.*)>')
-    return template_type_re.search(full_type).group(1)
+    template_type_re = re.compile('(.*?)<(.*)>')
+    return (template_type_re.search(full_type).group(1), template_type_re.search(full_type).group(2))
 
 
 to_python_list_template = r'''
@@ -28,34 +28,43 @@ to_python_list_template = r'''
 
 
 from_python_list_template = r'''
-        {{arg_type}} {{name}}_container;
-        for (Py_ssize_t i{{idx}} {{{{0}}}}; i{{idx}} < PyList_Size({{name}}); i{{idx}}++)
-        {{{{
-            {{name}}_container.{{insertion_function}}();
-            auto &value{{idx}} = {{name}}_container.back();
-            {nest}
-        }}}}
+        for (Py_ssize_t i{pidx} {{0}}; i{pidx} < PyList_Size({name}{pidx}); i{pidx}++)
+        {{
+            {name}_container{pidx}.{insertion_function}();
+            auto &{name}_container{nidx} = {name}_container{pidx}.back();
+            nest
+        }}
 '''
+
 
 from_python_list_inner_template = r'''
-            PyObject *pyvalue = PyList_GetItem({name}, i{idx});
-            value{{idx}} = {from_python_function}(pyvalue);
+            PyObject *pyvalue = PyList_GetItem({name}{pidx}, i{pidx});
+            {name}_container{nidx} = {from_python_function}(pyvalue);
 '''
 
 
-def convert_container_from_python(name, arg_type, cpp_type, idx):
-    template_type = parse_template(arg_type)
-    nest = from_python_list_inner_template
+def convert_container_from_python(name, arg_type, cpp_type, idx, block=from_python_list_template):
+    container, template_type = parse_template(arg_type)
+    insertion_function = cpp_types[container].insertion_function
+
+    pidx = '' if (idx==1 or idx == '') else idx-1
+    nidx = 1 if idx == '' else idx+1
+
+    block = block.format(arg_type=arg_type, name=name, nidx=nidx, pidx=pidx, insertion_function=insertion_function)
+    block = block.replace('}', '}}').replace('{', '{{')
+
     if template_type not in basic_types:
-        block = convert_container_from_python(name, template_type, cpp_type, idx+1)
-        
+        idx = nidx
+        preblock = '        {arg_type} {name}_container{pidx};'.format(arg_type=arg_type, name=name, pidx=pidx)
+        blockbody = '        PyObject* {name}{idx} = PyList_GetItem({name}{pidx}, i{pidx});\n'.format(name=name, idx=idx, pidx=pidx)
 
-    from_python_function = basic_types[template_type].from_python_function
-    insertion_function = cpp_types[cpp_type].insertion_function
-    block = from_python_list_template.format(nest=nest.format(name=name, idx=idx, from_python_function=from_python_function))
-    return block.format(arg_type=arg_type, name=name, insertion_function=insertion_function, idx=idx)
-
-
+        block = preblock + block.replace('nest', blockbody + from_python_list_template)
+        block = convert_container_from_python(name, template_type, container, idx+1, block)
+    else:
+        from_python_function = basic_types[template_type].from_python_function
+        block = block.replace('nest', from_python_list_inner_template.format(name=name, idx=idx, nidx=nidx, pidx=pidx, from_python_function=from_python_function))
+        return block
+    return block.format()
 
 
 class TypeConversion:
@@ -139,7 +148,10 @@ def _make_wrapper(block_name, block_signature):
             # insertion_function = cpp_types[cpp_type].insertion_function
             # wrapper_body += from_python_list_template.format(arg_type=arg_type, name=name, from_python_function=from_python_function, insertion_function=insertion_function)
 
-            wrapper_body += convert_container_from_python(name, arg_type, cpp_type, 0)
+            block = convert_container_from_python(name, arg_type, cpp_type, '')
+            wrapper_body += block
+
+            print(block)
 
             args[args.index(name)] = '{name}_container'.format(name=name)
 
