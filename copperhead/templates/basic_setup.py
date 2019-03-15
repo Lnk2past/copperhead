@@ -4,7 +4,7 @@ template = '''
 from setuptools import setup, Extension
 module1 = Extension('{block_name}',
                     sources = ['{source}'],
-                    extra_compile_args = ['-std=c++14', '-O3'],
+                    extra_compile_args = [{compiler_flags}],
                     language='c++')
 setup (name = '{block_name}',
        ext_modules = [module1])

@@ -10,22 +10,6 @@ def parse_template(full_type):
     return (template_type_re.search(full_type).group(1), template_type_re.search(full_type).group(2))
 
 
-to_python_list_template2 = r'''
-        PyObject* return_value_list = PyList_New(return_value_raw.size());
-        if (!return_value_list)
-        {{
-            PyErr_SetString({block_name}Error, "Could not allocate a new Python list!");
-            return nullptr;
-        }}
-        Py_ssize_t pos {{0}};
-        for (auto & element : return_value_raw)
-        {{
-            PyList_SET_ITEM(return_value_list, pos, {conversion}(element));
-            ++pos;
-        }}
-        return return_value_list;
-'''
-
 to_python_list_template = r'''
         Py_ssize_t pos{layer_index} {{0}};
         for (auto & return_value_raw{layer_index} : return_value_raw{previous_layer_index})
