@@ -27,6 +27,10 @@ PyObject* py_{block_name}(PyObject*, PyObject* args)
         PyErr_SetString({block_name}Error, "Unknown error");
         return nullptr;
     }}
+    if (PyErr_Occurred())
+    {{
+        PyErr_Print();
+    }}
 }}
 
 // create the methods array
