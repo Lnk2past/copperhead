@@ -7,7 +7,12 @@ __c__ o __pp__ erhead --> __cpp__ --> __C++__
 ```copperhead``` is a dynamic code generator that allows C++ code blocks to be written and executed within Python. Ultimately the code is wrapped and built into a module using ```setuptools```. ```copperhead``` is great for prototyping and "what-if" exploration. I would not necessarily recommend using it directly for production code and environments, but it is something that can aid in developing production/release grade modules and libraries.
 
 ## Installation
-Currently working to get this onto PyPI, but for now you can clone and install via ```setup.py```
+For the latest release:
+```
+pip install copperhead
+```
+
+For the latest dev, clone this repository and:
 ```
 python setup.py install
 ```
