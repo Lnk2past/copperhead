@@ -1,3 +1,3 @@
 default_config = {
-    'extra_compile_args': '-std=c++14'
+    'extra_compile_args': '"-std=c++14"'
 }
