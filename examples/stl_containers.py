@@ -1,5 +1,8 @@
 import copperhead as cpp
 
+
+# passing std::vector
+print('Test 1')
 test1 = r'''
 #include <iostream>
 #include <vector>
@@ -11,7 +14,13 @@ void vprint(std::vector<int> v)
     }
     std::cout << std::endl;
 }'''
+vprint = cpp.generate('vprint', 'void(std::vector<int>)', test1)
+vprint([1, 2, 3, 4])
+print('')
 
+
+# passing multiple containers
+print('Test 2')
 test2 = r'''
 #include <list>
 #include <vector>
@@ -28,7 +37,13 @@ int vsum(std::vector<int> v1, std::list<int> v2)
     }
     return sum;
 }'''
+vsum = cpp.generate('vsum', 'int(std::vector<int>, std::list<int>)', test2)
+print(vsum([1, 2, 3, 4], [5, 6, 7, 8, 9]))
+print('')
 
+
+# returning a std::vector
+print('Test 3')
 test3 = r'''
 #include <vector>
 std::vector<int> vcsum(std::vector<int> v)
@@ -39,7 +54,13 @@ std::vector<int> vcsum(std::vector<int> v)
     }
     return v;
 }'''
+vcsum = cpp.generate('vcsum', 'std::vector<int>(std::vector<int>)', test3)
+print(vcsum([1, 2, 3, 4]))
+print('')
 
+
+# passing std::deque and std::queue
+print('Test 4')
 test4 = r'''
 #include <deque>
 #include <iostream>
@@ -54,7 +75,13 @@ void qs(std::deque<double> deq, std::queue<double> c1)
     std::queue<double> c3(deq);
     std::cout << c3.size() << '\n';
 }'''
+qs = cpp.generate('qs', 'void(std::deque<double>, std::queue<double>)', test4)
+qs([3.14, 1.41, 4.15, 1.59, 5.92], [5.0001])
+print('')
 
+
+# passing nested std::vector
+print('Test 5')
 test5 = r'''
 #include <iostream>
 #include <vector>
@@ -70,7 +97,12 @@ void vprint2d(std::vector<std::vector<int>> v)
     }
     std::cout << std::endl;
 }'''
+vprint2d = cpp.generate('vprint2d', 'void(std::vector<std::vector<int>>)', test5)
+vprint2d([[0,1,2], [3,4,5], [6,7,8]])
+print('')
 
+# passing std::vector dested 3 deep
+print('Test 6')
 test6 = r'''
 #include <iostream>
 #include <vector>
@@ -90,7 +122,13 @@ void vprint3d(std::vector<std::vector<std::vector<int>>> v)
     }
     std::cout << std::endl;
 }'''
+vprint3d = cpp.generate('vprint3d', 'void(std::vector<std::vector<std::vector<int>>>)', test6)
+vprint3d([[[1,2,3], [1,2,3], [1,2,3]], [[1,2,3], [1,2,3], [1,2,3]], [[1,2,3], [1,2,3], [1,2,3]]])
+print('')
 
+
+# returning nested std::vector
+print('Test 7')
 test7 = r'''
 #include <vector>
 std::vector<std::vector<int>> init2d()
@@ -102,7 +140,13 @@ std::vector<std::vector<int>> init2d()
     }
     return v2d;
 }'''
+init2d = cpp.generate('init2d', 'std::vector<std::vector<int>>()', test7)
+print(init2d())
+print('')
 
+
+# returning std::list nested inside std::vector
+print('Test 8')
 test8 = r'''
 #include <list>
 #include <vector>
@@ -115,43 +159,6 @@ std::vector<std::list<double>> init2dvlist()
     }
     return v2dvl;
 }'''
-
-print('Test 1')
-vprint = cpp.generate('vprint', 'void(std::vector<int>)', test1)
-vprint([1, 2, 3, 4])
-print('')
-
-print('Test 2')
-vsum = cpp.generate('vsum', 'int(std::vector<int>, std::list<int>)', test2)
-print(vsum([1, 2, 3, 4], [5, 6, 7, 8, 9]))
-print('')
-
-print('Test 3')
-vcsum = cpp.generate('vcsum', 'std::vector<int>(std::vector<int>)', test3)
-print(vcsum([1, 2, 3, 4]))
-print('')
-
-print('Test 4')
-qs = cpp.generate('qs', 'void(std::deque<double>, std::queue<double>)', test4)
-qs([3.14, 1.41, 4.15, 1.59, 5.92], [5.0001])
-print('')
-
-print('Test 5')
-vprint2d = cpp.generate('vprint2d', 'void(std::vector<std::vector<int>>)', test5)
-vprint2d([[0,1,2], [3,4,5], [6,7,8]])
-print('')
-
-print('Test 6')
-vprint3d = cpp.generate('vprint3d', 'void(std::vector<std::vector<std::vector<int>>>)', test6)
-vprint3d([[[1,2,3], [1,2,3], [1,2,3]], [[1,2,3], [1,2,3], [1,2,3]], [[1,2,3], [1,2,3], [1,2,3]]])
-print('')
-
-print('Test 7')
-init2d = cpp.generate('init2d', 'std::vector<std::vector<int>>()', test7)
-print(init2d())
-print('')
-
-print('Test 8')
 init2dvlist = cpp.generate('init2dvlist', 'std::vector<std::list<double>>()', test8)
 print(init2dvlist())
 print('')

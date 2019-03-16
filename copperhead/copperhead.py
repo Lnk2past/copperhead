@@ -7,7 +7,7 @@ import sys
 
 import copperhead.codewrapper
 import copperhead.setupgenerator
-
+from copperhead.default_config import default_config
 
 cache_dir = '.copperhead_cache'
 
@@ -33,32 +33,30 @@ def generate(block_name, block_signature, block, config={}, rebuild=False):
     -------
     function
         Newly generated function
-
     """
     this_cache_dir = os.path.abspath(os.path.join(cache_dir, block_name))
     os.makedirs(this_cache_dir, exist_ok=True)
 
-    config_file = os.path.abspath(os.path.join('~', '.copperhead.json'))
-    print(config_file)
+    config_file = '.copperhead.json'
     if os.path.exists(config_file):
         with open(config_file) as json_config:
-            config = {**config, **json.load(json_config)}
+            config = {**json.load(json_config), **config}
+    config = {**default_config, **config}
 
-    print(config)
     egg = _get_egg(this_cache_dir)
     if not egg or rebuild:
         source = os.path.abspath(os.path.join(this_cache_dir, block_name + '_block.cpp'))
         copperhead.codewrapper.create(source, block_name, block_signature, block)
 
         setup = os.path.abspath(os.path.join(this_cache_dir, block_name + '_setup.py'))
-        copperhead.setupgenerator.create(setup, block_name, source, compiler_flags=config.get('compiler_flags', ''))
+        copperhead.setupgenerator.create(setup, block_name, source, config)
 
         if 'PYTHONPATH' not in os.environ:
             os.environ['PYTHONPATH'] = ''
         os.environ['PYTHONPATH'] += ':{}'.format(this_cache_dir)
 
         setuptools.sandbox.run_setup(setup, args=['install',
-            f'--install-lib={this_cache_dir}'
+            '--install-lib={}'.format(this_cache_dir)
             ])
         egg = _get_egg(this_cache_dir)
 
