@@ -37,6 +37,13 @@ The setup script is just a *setup.py* script that we populate with a few bits of
 ### Installing & Importing C++ Modules
 The newly created *setup.py* script is used for generating the module. It will dump the new modules locally in a directory named *.copperhead\_cache*. Your path will be adjusted to include the newly generated egg. If the egg already exists, this process is skipped and you will simply import what is already available. Note that the *function* is returned, not the module.
 
+## Development Environment
+I am coding this to work with latest Python and with modern C++ techniques. I have ~~absolutely no~~ little interest in backwards compatibility. While earlier versions and standards may work right now, I do not guarantee any of that moving forward. I will not hinder development for the sake of supporting something older.
+
+I have two primary development environments at the moment and so you can for expect support for at least the following:
+- **Python 3.5.3** and GCC 6.3.0 (Raspbian)
+- **Python 3.6.7** and GCC 7.3.0 (Ubuntu 18.04.2)
+
 ## Basic Usage
 ### Hello World!
 Here is a simple example showing how to create your typical *Hello World!* program:
@@ -158,13 +165,6 @@ Before diving into evaluating this against our Python, do note that I decided to
 Running this you will see a good bit of jargon dumped to stdout: this is the creation of the C++ extension (running again, the cache is accessed and you will not see it). On my system this runs in ~9 seconds. 1:40 to 0:09. The improvements here become even greater as the problem space scales. While timing is hardly a valuble benchmark, the savings here are too great and too obvious to ignore.
 
 Note that the [example code](examples/fractal.py) in this repository uses ```h = 0.005``` to reduce the runtime during testing.
-
-## Development Environment
-I am coding this to work with latest Python and with modern C++ techniques. I have ~~absolutely no~~ little interest in backwards compatibility. While earlier versions and standards may work right now, I do not guarantee any of that moving forward. I will not hinder development for the sake of supporting something older.
-
-I have two primary development environments at the moment and so you can for expect support for at least the following:
-- **Python 3.5.3** and GCC 6.3.0 (Raspbian)
-- **Python 3.6.7** and GCC 7.3.0 (Ubuntu 18.04.2)
 
 ## License
 See [LICENSE.md](LICENSE.md) for the specifics, but it is an MIT license.
