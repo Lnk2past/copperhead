@@ -1,3 +1,15 @@
 default_config = {
-    'extra_compile_args': '"-std=c++14"'
+    'include_dirs': '',
+    'define_macros': '',
+    'undef_macros': '',
+    'library_dirs': '',
+    'libraries': '',
+    'runtime_library_dirs': '',
+    'extra_objects': '',
+    'extra_compile_args': '"-std=c++14"',
+    'extra_link_args': '',
+    'export_symbols': '',
+    'depends': '',
+    'language': '',
+    'optional': False,
 }

@@ -1,8 +1,8 @@
-import os
 import re
 
 from .__version__ import __version__ as version
 from .templates.basic_wrapper import template
+from .templates.container_conversions import *
 
 
 def parse_template(full_type):
@@ -10,37 +10,12 @@ def parse_template(full_type):
     return (template_type_re.search(full_type).group(1), template_type_re.search(full_type).group(2))
 
 
-to_python_list_template = r'''
-        Py_ssize_t pos{layer_index} {{0}};
-        for (auto & return_value_raw{layer_index} : return_value_raw{previous_layer_index})
-        {{
-            <next_layer>
-            <finalize_set>
-            ++pos{layer_index};
-        }}
-'''
-
-
-to_python_list_intermediate_template = r'''
-        PyObject* return_value_list{next_layer_index} = PyList_New(return_value_raw{layer_index}.size());
-'''
-
-to_python_list_intermediate_template_2 = r'''
-        PyList_SET_ITEM(return_value_list{layer_index}, pos{layer_index}, return_value_list{next_layer_index});
-'''
-
-to_python_list_inner_template = r'''
-            PyObject *pyvalue = {to_python_function}(return_value_raw{layer_index});
-            PyList_SET_ITEM(return_value_list{layer_index}, pos{layer_index}, pyvalue);
-'''
-
-
 def convert_container_to_python(arg_type, layer_index, block=to_python_list_template):
     previous_layer_index = '' if (layer_index in ['', 1]) else layer_index-1
     next_layer_index = 1 if not layer_index else layer_index+1
 
     container, template_type = parse_template(arg_type)
-    insertion_function = cpp_types[container].insertion_function
+    insertion_function = container_types[container].insertion_function
 
     block = block.format(previous_layer_index=previous_layer_index, layer_index=layer_index, next_layer_index=next_layer_index, insertion_function=insertion_function)
     block = block.replace('}', '}}').replace('{', '{{')
@@ -59,33 +34,11 @@ def convert_container_to_python(arg_type, layer_index, block=to_python_list_temp
     return block
 
 
-from_python_list_template = r'''
-        // iterate across the list, current layer={layer_index} (empty means 1st)
-        for (Py_ssize_t i{layer_index} {{0}}; i{layer_index} < PyList_Size({name}{layer_index}); i{layer_index}++)
-        {{
-            {name}_container{layer_index}.{insertion_function}();
-            auto &{name}_container{next_layer_index} = {name}_container{layer_index}.back();
-            <next_layer>
-        }}
-'''
-
-
-from_python_list_intermediate_template = r'''
-        PyObject* {name}{next_layer_index} = PyList_GetItem({name}{layer_index}, i{layer_index});
-'''
-
-
-from_python_list_inner_template = r'''
-            PyObject *pyvalue = PyList_GetItem({name}{layer_index}, i{layer_index});
-            {name}_container{next_layer_index} = {from_python_function}(pyvalue);
-'''
-
-
 def convert_container_from_python(name, arg_type, layer_index, block=from_python_list_template):
     next_layer_index = 1 if not layer_index else layer_index+1
 
     container, template_type = parse_template(arg_type)
-    insertion_function = cpp_types[container].insertion_function
+    insertion_function = container_types[container].insertion_function
 
     block = block.format(name=name, layer_index=layer_index, next_layer_index=next_layer_index, insertion_function=insertion_function)
     block = block.replace('}', '}}').replace('{', '{{')
@@ -129,11 +82,15 @@ basic_types = {
 }
 
 
-cpp_types = {
-    'std::list': TypeConversion('std::list', 'O', c_type='PyObject*', insertion_function='emplace_back'),
+container_types = {
+    #'std::array': TypeConversion('std::array', 'O', c_type='PyObject*'),
     'std::vector': TypeConversion('std::vector', 'O', c_type='PyObject*', insertion_function='emplace_back', reserve='reserve'),
-    'std::queue': TypeConversion('std::queue', 'O', c_type='PyObject*', insertion_function='emplace'),
     'std::deque': TypeConversion('std::deque', 'O', c_type='PyObject*', insertion_function='emplace_back'),
+    'std::list': TypeConversion('std::list', 'O', c_type='PyObject*', insertion_function='emplace_back'),
+    'std::forward_list': TypeConversion('std::forward_list', 'O', c_type='PyObject*', insertion_function='push_front'),
+    'std::stack': TypeConversion('std::stack', 'O', c_type='PyObject*', insertion_function='emplace'),
+    'std::queue': TypeConversion('std::queue', 'O', c_type='PyObject*', insertion_function='emplace'),
+    'std::priority_queue': TypeConversion('std::priority_queue', 'O', c_type='PyObject*', insertion_function='emplace'),
 }
 
 
@@ -156,10 +113,10 @@ def _make_wrapper(block_name, block_signature):
                 format_str += basic_types[arg_type].format_unit
                 python_type = basic_types[arg_type].c_type
             else:
-                for cpp_type in cpp_types.keys():
+                for cpp_type in container_types.keys():
                     if arg_type.startswith(cpp_type):
-                        format_str += cpp_types[cpp_type].format_unit
-                        python_type = cpp_types[cpp_type].c_type
+                        format_str += container_types[cpp_type].format_unit
+                        python_type = container_types[cpp_type].c_type
                         conversion_args.append((chr(arg_name), arg_type))
                         break
 
@@ -192,9 +149,9 @@ def _make_wrapper(block_name, block_signature):
         if return_type in basic_types:
             wrapper_body += '        return {}(return_value_raw);'.format(basic_types[return_type].to_python_function)
         elif return_type == 'std::string':
-            wrapper_body += '        return {}(return_value_raw.c_str());'.format(cpp_types[return_type].to_python_function)
+            wrapper_body += '        return {}(return_value_raw.c_str());'.format(container_types[return_type].to_python_function)
         else:
-            for cpp_type in cpp_types.keys():
+            for cpp_type in container_types.keys():
                 if return_type.startswith(cpp_type):
                     break
 
@@ -206,8 +163,7 @@ def _make_wrapper(block_name, block_signature):
     return wrapper_body
 
 def create(filename, block_name, block_signature, block):
-    source = os.path.join(filename)
-    with open(source, 'w') as sf:
+    with open(filename, 'w') as sf:
         block_wrapper_body = _make_wrapper(block_name, block_signature)
         sf.write(template.format(block_name=block_name, block=block, block_wrapper_body=block_wrapper_body, version=version))
 
