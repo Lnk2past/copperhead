@@ -1,7 +1,7 @@
 # copperhead
 [![Build Status](https://travis-ci.org/Lnk2past/copperhead.svg?branch=master)](https://travis-ci.org/Lnk2past/copperhead)
 
-__c__ o __pp__ erhead --> __cpp__ --> __C++__
+python --> snake --> copperhead --> __c__ o __pp__ erhead --> __cpp__ --> __C++__
 
 ## Introduction
 ```copperhead``` is a dynamic code generator that allows C++ code blocks to be written and executed within Python. Ultimately the code is wrapped and built into a module using ```setuptools```. ```copperhead``` is great for prototyping and "what-if" exploration. I would not necessarily recommend using it directly for production code and environments, but it is something that can aid in developing production/release grade modules and libraries.
@@ -88,7 +88,7 @@ void vprint(std::vector<int> v)
 
 vprint = cpp.generate('vprint', 'void(std::vector<int>)', std_vector_cpp)
 
-vprint()
+vprint([1,2,3,4,5])
 ```
 
 ### Mandelbrot
