@@ -1,5 +1,7 @@
 import copperhead as cpp
 
+print(cpp.__file__)
+print(dir(cpp))
 
 # simple output
 print('Test 1')
