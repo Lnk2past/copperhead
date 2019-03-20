@@ -5,9 +5,9 @@ import os
 import setuptools.sandbox
 import sys
 
-import codewrapper
-import setupgenerator
-from default_config import default_config
+from copperhead.codewrapper import create as create_wrapper
+from copperhead.setupgenerator import create as create_setup 
+from copperhead.default_config import default_config
 
 cache_dir = '.copperhead_cache'
 
@@ -46,10 +46,10 @@ def generate(block_name, block_signature, block, config={}, rebuild=False):
     egg = _get_egg(this_cache_dir)
     if not egg or rebuild:
         source = os.path.abspath(os.path.join(this_cache_dir, block_name + '_block.cpp'))
-        codewrapper.create(source, block_name, block_signature, block)
+        create_wrapper(source, block_name, block_signature, block)
 
         setup = os.path.abspath(os.path.join(this_cache_dir, block_name + '_setup.py'))
-        setupgenerator.create(setup, block_name, source, config)
+        create_setup(setup, block_name, source, config)
 
         if 'PYTHONPATH' not in os.environ:
             os.environ['PYTHONPATH'] = ''

@@ -1,8 +1,8 @@
 import re
 
-from __version__ import __version__ as version
-from templates.basic_wrapper import template
-from templates.container_conversions import *
+from copperhead.__version__ import __version__ as version
+from copperhead.templates.basic_wrapper import template
+from copperhead.templates.container_conversions import *
 
 
 def _parse_template(full_type):
