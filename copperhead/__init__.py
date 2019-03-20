@@ -1,2 +1,1 @@
-from .copperhead import generate
-from .__version__ import *
+from copperhead.module_generator import generate

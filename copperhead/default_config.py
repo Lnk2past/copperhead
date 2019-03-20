@@ -1,4 +1,4 @@
-default_config = {
+config = {
     'include_dirs': '',
     'define_macros': '',
     'undef_macros': '',

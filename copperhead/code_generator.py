@@ -1,20 +1,20 @@
 import re
 
-from .__version__ import __version__ as version
-from .templates.basic_wrapper import template
-from .templates.container_conversions import *
+from copperhead.__version__ import __version__ as version
+from copperhead.templates.basic_wrapper import template
+from copperhead.templates.container_conversions import *
 
 
-def parse_template(full_type):
+def _parse_template(full_type):
     template_type_re = re.compile('(.*?)<(.*)>')
     return (template_type_re.search(full_type).group(1), template_type_re.search(full_type).group(2))
 
 
-def convert_container_to_python(arg_type, layer_index, block=to_python_list_template):
+def _convert_container_to_python(arg_type, layer_index, block=to_python_list_template):
     previous_layer_index = '' if (layer_index in ['', 1]) else layer_index-1
     next_layer_index = 1 if not layer_index else layer_index+1
 
-    container, template_type = parse_template(arg_type)
+    container, template_type = _parse_template(arg_type)
     insertion_function = container_types[container].insertion_function
 
     block = block.format(previous_layer_index=previous_layer_index, layer_index=layer_index, next_layer_index=next_layer_index, insertion_function=insertion_function)
@@ -23,7 +23,7 @@ def convert_container_to_python(arg_type, layer_index, block=to_python_list_temp
     if template_type not in basic_types:
         new_layer_type = to_python_list_intermediate_template.format(layer_index=layer_index, next_layer_index=next_layer_index)
         block = block.replace('<next_layer>', new_layer_type + to_python_list_template)
-        block = convert_container_to_python(template_type, next_layer_index, block)
+        block = _convert_container_to_python(template_type, next_layer_index, block)
         block = block.replace('<finalize_set>', to_python_list_intermediate_template_2.format(layer_index=layer_index, next_layer_index=next_layer_index))
     else:
         to_python_function = basic_types[template_type].to_python_function
@@ -34,10 +34,10 @@ def convert_container_to_python(arg_type, layer_index, block=to_python_list_temp
     return block
 
 
-def convert_container_from_python(name, arg_type, layer_index, block=from_python_list_template):
+def _convert_container_from_python(name, arg_type, layer_index, block=from_python_list_template):
     next_layer_index = 1 if not layer_index else layer_index+1
 
-    container, template_type = parse_template(arg_type)
+    container, template_type = _parse_template(arg_type)
     insertion_function = container_types[container].insertion_function
 
     block = block.format(name=name, layer_index=layer_index, next_layer_index=next_layer_index, insertion_function=insertion_function)
@@ -46,7 +46,7 @@ def convert_container_from_python(name, arg_type, layer_index, block=from_python
     if template_type not in basic_types:
         new_layer_type = from_python_list_intermediate_template.format(name=name, layer_index=layer_index, next_layer_index=next_layer_index)
         block = block.replace('<next_layer>', new_layer_type + from_python_list_template)
-        block = convert_container_from_python(name, template_type, next_layer_index, block)
+        block = _convert_container_from_python(name, template_type, next_layer_index, block)
     else:
         from_python_function = basic_types[template_type].from_python_function
         block = block.replace('<next_layer>', from_python_list_inner_template.format(name=name, layer_index=layer_index, next_layer_index=next_layer_index, from_python_function=from_python_function))
@@ -132,7 +132,7 @@ def _make_wrapper(block_name, block_signature):
             name, arg_type = conversion_arg
 
             block = '        {arg_type} {name}_container;\n'.format(arg_type=arg_type, name=name)
-            block += convert_container_from_python(name, arg_type, '')
+            block += _convert_container_from_python(name, arg_type, '')
             wrapper_body += block.format()
 
             args[args.index(name)] = '{name}_container'.format(name=name)
@@ -156,11 +156,12 @@ def _make_wrapper(block_name, block_signature):
                     break
 
             block = '        PyObject* return_value_list = PyList_New(return_value_raw.size());'
-            block += convert_container_to_python(return_type, '')
+            block += _convert_container_to_python(return_type, '')
             wrapper_body += block.format()
             wrapper_body += '        return return_value_list;'
 
     return wrapper_body
+
 
 def create(filename, block_name, block_signature, block):
     with open(filename, 'w') as sf:
