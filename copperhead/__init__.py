@@ -1,1 +1,1 @@
-from copperhead.copperhead import generate
+from copperhead.module_generator import generate
