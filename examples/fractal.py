@@ -1,4 +1,11 @@
+import sys
 import copperhead as cpp
+
+extra_compile_args = '/std:c++14' if sys.version.split('[')[1].startswith('MSC') else '-std=c++14'
+config = {
+    'extra_compile_args': extra_compile_args
+}
+
 
 mandelbrot_cpp = r'''
 #include <cmath>
@@ -35,5 +42,5 @@ void compute(std::string filename, double x, double y, double h)
     }
 }'''
 
-compute = cpp.generate('compute', 'void(std::string, double, double, double)', mandelbrot_cpp)
+compute = cpp.generate('compute', 'void(std::string, double, double, double)', mandelbrot_cpp, config=config)
 compute('fractal.dat', -2.0, 1.25, 0.005)

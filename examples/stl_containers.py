@@ -1,4 +1,10 @@
+import sys
 import copperhead as cpp
+
+extra_compile_args = '/std:c++14' if sys.version.split('[')[1].startswith('MSC') else '-std=c++14'
+config = {
+    'extra_compile_args': extra_compile_args
+}
 
 
 # passing std::vector
@@ -14,7 +20,7 @@ void vprint(std::vector<int> v)
     }
     std::cout << std::endl;
 }'''
-vprint = cpp.generate('vprint', 'void(std::vector<int>)', test1)
+vprint = cpp.generate('vprint', 'void(std::vector<int>)', test1, config=config)
 vprint([1, 2, 3, 4])
 print('')
 
@@ -37,7 +43,7 @@ int vsum(std::vector<int> v1, std::list<int> v2)
     }
     return sum;
 }'''
-vsum = cpp.generate('vsum', 'int(std::vector<int>, std::list<int>)', test2)
+vsum = cpp.generate('vsum', 'int(std::vector<int>, std::list<int>)', test2, config=config)
 print(vsum([1, 2, 3, 4], [5, 6, 7, 8, 9]))
 print('')
 
@@ -54,7 +60,7 @@ std::vector<int> vcsum(std::vector<int> v)
     }
     return v;
 }'''
-vcsum = cpp.generate('vcsum', 'std::vector<int>(std::vector<int>)', test3)
+vcsum = cpp.generate('vcsum', 'std::vector<int>(std::vector<int>)', test3, config=config)
 print(vcsum([1, 2, 3, 4]))
 print('')
 
@@ -75,7 +81,7 @@ void qs(std::deque<double> deq, std::queue<double> c1)
     std::queue<double> c3(deq);
     std::cout << c3.size() << '\n';
 }'''
-qs = cpp.generate('qs', 'void(std::deque<double>, std::queue<double>)', test4)
+qs = cpp.generate('qs', 'void(std::deque<double>, std::queue<double>)', test4, config=config)
 qs([3.14, 1.41, 4.15, 1.59, 5.92], [5.0001])
 print('')
 
@@ -97,7 +103,7 @@ void vprint2d(std::vector<std::vector<int>> v)
     }
     std::cout << std::endl;
 }'''
-vprint2d = cpp.generate('vprint2d', 'void(std::vector<std::vector<int>>)', test5)
+vprint2d = cpp.generate('vprint2d', 'void(std::vector<std::vector<int>>)', test5, config=config)
 vprint2d([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
 print('')
 
@@ -122,7 +128,7 @@ void vprint3d(std::vector<std::vector<std::vector<int>>> v)
     }
     std::cout << std::endl;
 }'''
-vprint3d = cpp.generate('vprint3d', 'void(std::vector<std::vector<std::vector<int>>>)', test6)
+vprint3d = cpp.generate('vprint3d', 'void(std::vector<std::vector<std::vector<int>>>)', test6, config=config)
 vprint3d([[[1, 2, 3], [1, 2, 3], [1, 2, 3]], [[1, 2, 3], [1, 2, 3], [1, 2, 3]], [[1, 2, 3], [1, 2, 3], [1, 2, 3]]])
 print('')
 
@@ -140,7 +146,7 @@ std::vector<std::vector<int>> init2d()
     }
     return v2d;
 }'''
-init2d = cpp.generate('init2d', 'std::vector<std::vector<int>>()', test7)
+init2d = cpp.generate('init2d', 'std::vector<std::vector<int>>()', test7, config=config)
 print(init2d())
 print('')
 
@@ -159,6 +165,6 @@ std::vector<std::list<double>> init2dvlist()
     }
     return v2dvl;
 }'''
-init2dvlist = cpp.generate('init2dvlist', 'std::vector<std::list<double>>()', test8)
+init2dvlist = cpp.generate('init2dvlist', 'std::vector<std::list<double>>()', test8, config=config)
 print(init2dvlist())
 print('')

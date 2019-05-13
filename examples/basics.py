@@ -1,4 +1,10 @@
+import sys
 import copperhead as cpp
+
+extra_compile_args = '/std:c++14' if sys.version.split('[')[1].startswith('MSC') else '-std=c++14'
+config = {
+    'extra_compile_args': extra_compile_args
+}
 
 
 # simple output
@@ -9,7 +15,7 @@ void hello_world()
 {
    std::cout << "Hello World!" << std::endl;
 }'''
-hello_world = cpp.generate('hello_world', 'void()', test1)
+hello_world = cpp.generate('hello_world', 'void()', test1, config=config)
 hello_world()
 print('')
 
@@ -26,7 +32,7 @@ int fibonacci(int i)
    }
    return f;
 }'''
-fibonacci = cpp.generate('fibonacci', 'int(int)', test2)
+fibonacci = cpp.generate('fibonacci', 'int(int)', test2, config=config)
 print(fibonacci(6))
 print('')
 
@@ -38,7 +44,7 @@ int sum(int i, int j)
 {
    return i+j;
 }'''
-sum = cpp.generate('sum', 'int(int, int)', test3)
+sum = cpp.generate('sum', 'int(int, int)', test3, config=config)
 print(sum(6, 10))
 print('')
 
@@ -51,7 +57,7 @@ void greet(std::string name)
 {
    std::cout << "Hello, " << name << std::endl;
 }'''
-greet = cpp.generate('greet', 'void(std::string)', test4)
+greet = cpp.generate('greet', 'void(std::string)', test4, config=config)
 greet('bob')
 print('')
 
@@ -64,7 +70,7 @@ void bad()
 {
    throw std::runtime_error("You broke me!");
 }'''
-cpp.generate('bad', 'void()', test5)
+cpp.generate('bad', 'void()', test5, config=config)
 import bad  # noqa: E402
 try:
     bad.bad()
