@@ -1,7 +1,7 @@
 import sys
 import copperhead as cpp
 
-extra_compile_args = '/std:c++14' if sys.version.split('[')[1].startswith('MSC') else '-std=c++14'
+extra_compile_args = "'/std:c++14'" if sys.version.split('[')[1].startswith('MSC') else "'-std=c++14'"
 config = {
     'extra_compile_args': extra_compile_args
 }
