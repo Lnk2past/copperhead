@@ -48,6 +48,7 @@ I am coding this to work with latest Python and with modern C++ techniques. I ha
 I have two primary development environments at the moment and so you can for expect support for at least the following:
 - **Python 3.5.3** and GCC 6.3.0 (Raspbian)
 - **Python 3.6.7** and GCC 7.3.0 (Ubuntu 18.04.2)
+- **Python 3.7.3** and MSVC v1916 (Windows 10, Visual C++ 2017 (15.9))
 
 ## Basic Usage
 ### Hello World!
