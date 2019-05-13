@@ -98,7 +98,7 @@ void vprint2d(std::vector<std::vector<int>> v)
     std::cout << std::endl;
 }'''
 vprint2d = cpp.generate('vprint2d', 'void(std::vector<std::vector<int>>)', test5)
-vprint2d([[0,1,2], [3,4,5], [6,7,8]])
+vprint2d([[0, 1, 2], [3, 4, 5], [6, 7, 8]])
 print('')
 
 # passing std::vector dested 3 deep
@@ -123,7 +123,7 @@ void vprint3d(std::vector<std::vector<std::vector<int>>> v)
     std::cout << std::endl;
 }'''
 vprint3d = cpp.generate('vprint3d', 'void(std::vector<std::vector<std::vector<int>>>)', test6)
-vprint3d([[[1,2,3], [1,2,3], [1,2,3]], [[1,2,3], [1,2,3], [1,2,3]], [[1,2,3], [1,2,3], [1,2,3]]])
+vprint3d([[[1, 2, 3], [1, 2, 3], [1, 2, 3]], [[1, 2, 3], [1, 2, 3], [1, 2, 3]], [[1, 2, 3], [1, 2, 3], [1, 2, 3]]])
 print('')
 
 

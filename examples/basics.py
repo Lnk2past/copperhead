@@ -65,9 +65,9 @@ void bad()
    throw std::runtime_error("You broke me!");
 }'''
 cpp.generate('bad', 'void()', test5)
-import bad
+import bad  # noqa: E402
 try:
-   bad.bad()
+    bad.bad()
 except bad.error as e:
-   print('Got some weird error...', e)
+    print('Got some weird error...', e)
 print('')

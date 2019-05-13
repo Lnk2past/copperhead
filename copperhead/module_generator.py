@@ -55,9 +55,7 @@ def generate(block_name, block_signature, block, config={}, rebuild=False):
             os.environ['PYTHONPATH'] = ''
         os.environ['PYTHONPATH'] += ':{}'.format(this_cache_dir)
 
-        setuptools.sandbox.run_setup(setup, args=['install',
-            '--install-lib={}'.format(this_cache_dir)
-            ])
+        setuptools.sandbox.run_setup(setup, args=['install', '--install-lib={}'.format(this_cache_dir)])
         egg = _get_egg(this_cache_dir)
 
     sys.path.append(egg)
@@ -71,4 +69,3 @@ def _get_egg(directory):
     if eggs:
         return eggs[0]
     return ''
-
