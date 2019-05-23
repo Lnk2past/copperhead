@@ -13,7 +13,7 @@ from copperhead.default_config import config as default_config
 cache_dir = '.copperhead_cache'
 
 
-def generate(block_name, block_signature, block, config={}, rebuild=False):
+def generate(block_name, block_signature, block=None, block_file=None, config={}, rebuild=False):
     """
     Generate a new module for the input block of code and return the function handle.
 
@@ -25,6 +25,8 @@ def generate(block_name, block_signature, block, config={}, rebuild=False):
         function type
     block : str
         code to be wrapped
+    block_file : str
+        file path to the source code to be wrapped, takes precedence over block
     config : dict
         dictionary of configurables
     rebuild : bool
@@ -35,8 +37,11 @@ def generate(block_name, block_signature, block, config={}, rebuild=False):
     function
         Newly generated function
     """
-    this_cache_dir = pathlib.Path(cache_dir, block_name).resolve().absolute()
-    os.makedirs(this_cache_dir, exist_ok=True)
+    if not block and not block_file:
+        raise TypeError('generate() missing 1 required keyword argument: \'block\' or \'block_file\'')
+
+    this_cache_dir = pathlib.Path(cache_dir, block_name).absolute()
+    this_cache_dir.mkdir(parents=True, exist_ok=True)
 
     config_file = '.copperhead.json'
     if os.path.exists(config_file):
@@ -46,11 +51,15 @@ def generate(block_name, block_signature, block, config={}, rebuild=False):
 
     egg = _get_egg(this_cache_dir)
     if not egg or rebuild:
+        if block_file:
+            with open(block_file) as bfile:
+                block = bfile.read()
+
         source = this_cache_dir / (block_name + '_block.cpp')
-        create_code(source, block_name, block_signature, block)
+        create_code(str(source), block_name, block_signature, block)
 
         setup = this_cache_dir / (block_name + '_setup.py')
-        create_setup(setup, block_name, source._str, config)
+        create_setup(str(setup), block_name, str(source), config)
 
         if 'PYTHONPATH' not in os.environ:
             os.environ['PYTHONPATH'] = ''
@@ -66,7 +75,7 @@ def generate(block_name, block_signature, block, config={}, rebuild=False):
 
 def _get_egg(directory):
     """Blindly find and return the first egg we find"""
-    eggs = glob.glob(os.path.join(directory, '*.egg'))
+    eggs = list(directory.glob('*.egg'))
     if eggs:
-        return eggs[0]
+        return str(eggs[0])
     return ''
