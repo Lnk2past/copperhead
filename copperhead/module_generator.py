@@ -12,7 +12,7 @@ from copperhead.default_config import config as default_config
 cache_dir = '.copperhead_cache'
 
 
-def generate(block_name, block_signature, block, config={}, rebuild=False):
+def generate(block_name, block_signature, block=None, block_file=None, config={}, rebuild=False):
     """
     Generate a new module for the input block of code and return the function handle.
 
@@ -24,6 +24,8 @@ def generate(block_name, block_signature, block, config={}, rebuild=False):
         function type
     block : str
         code to be wrapped
+    block_file : str
+        file path to the source code to be wrapped, takes precedence over block
     config : dict
         dictionary of configurables
     rebuild : bool
@@ -34,6 +36,9 @@ def generate(block_name, block_signature, block, config={}, rebuild=False):
     function
         Newly generated function
     """
+    if not block and not block_file:
+        raise TypeError('generate() missing 1 required keyword argument: \'block\' or \'block_file\'')
+
     this_cache_dir = os.path.abspath(os.path.join(cache_dir, block_name))
     os.makedirs(this_cache_dir, exist_ok=True)
 
@@ -45,6 +50,10 @@ def generate(block_name, block_signature, block, config={}, rebuild=False):
 
     egg = _get_egg(this_cache_dir)
     if not egg or rebuild:
+        if block_file:
+            with open(block_file) as bfile:
+                block = bfile.read()
+
         source = os.path.abspath(os.path.join(this_cache_dir, block_name + '_block.cpp'))
         create_code(source, block_name, block_signature, block)
 
