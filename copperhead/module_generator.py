@@ -1,6 +1,7 @@
 import importlib
 import glob
 import json
+import pathlib
 import os
 import setuptools.sandbox
 import sys
@@ -39,7 +40,7 @@ def generate(block_name, block_signature, block=None, block_file=None, config={}
     if not block and not block_file:
         raise TypeError('generate() missing 1 required keyword argument: \'block\' or \'block_file\'')
 
-    this_cache_dir = os.path.abspath(os.path.join(cache_dir, block_name))
+    this_cache_dir = pathlib.Path(cache_dir, block_name).resolve().absolute()
     os.makedirs(this_cache_dir, exist_ok=True)
 
     config_file = '.copperhead.json'
@@ -54,19 +55,18 @@ def generate(block_name, block_signature, block=None, block_file=None, config={}
             with open(block_file) as bfile:
                 block = bfile.read()
 
-        source = os.path.abspath(os.path.join(this_cache_dir, block_name + '_block.cpp'))
+        source = this_cache_dir / (block_name + '_block.cpp')
+
         create_code(source, block_name, block_signature, block)
 
-        setup = os.path.abspath(os.path.join(this_cache_dir, block_name + '_setup.py'))
-        create_setup(setup, block_name, source, config)
+        setup = this_cache_dir / (block_name + '_setup.py')
+        create_setup(setup, block_name, source._str, config)
 
         if 'PYTHONPATH' not in os.environ:
             os.environ['PYTHONPATH'] = ''
-        os.environ['PYTHONPATH'] += ':{}'.format(this_cache_dir)
+        os.environ['PYTHONPATH'] += '{}{}'.format(os.pathsep, this_cache_dir)
 
-        setuptools.sandbox.run_setup(setup, args=['install',
-            '--install-lib={}'.format(this_cache_dir)
-            ])
+        setuptools.sandbox.run_setup(str(setup), args=['install', '--install-lib={}'.format(this_cache_dir)])
         egg = _get_egg(this_cache_dir)
 
     sys.path.append(egg)
@@ -80,4 +80,3 @@ def _get_egg(directory):
     if eggs:
         return eggs[0]
     return ''
-

@@ -2,7 +2,46 @@ import re
 
 from copperhead.__version__ import __version__ as version
 from copperhead.templates.basic_wrapper import template
-from copperhead.templates.container_conversions import *
+from copperhead.templates.container_conversions import *  # noqa: F403
+
+
+class TypeConversion:
+    def __init__(self, cpp_type, format_unit, to_python_function=None, from_python_function=None, c_type=None, insertion_function=None, reserve=None):
+        self.cpp_type = cpp_type
+        self.c_type = c_type if c_type else cpp_type
+        self.format_unit = format_unit
+        self.to_python_function = to_python_function
+        self.from_python_function = from_python_function
+        self.insertion_function = insertion_function
+        self.reserve = reserve
+
+
+basic_types = {
+    'short': TypeConversion('short', 'h', 'PyLong_FromLong', 'PyLong_AsLong'),
+    'int': TypeConversion('int', 'i', 'PyLong_FromLong', 'PyLong_AsLong'),
+    'long': TypeConversion('long', 'l', 'PyLong_FromLong', 'PyLong_AsLong'),
+    'long long': TypeConversion('long long', 'L', 'PyLong_FromLongLong', 'PyLong_AsLongLong'),
+    'unsigned char': TypeConversion('unsigned char', 'b', 'PyLong_FromUnsignedLong', 'PyLong_AsUnsignedLong'),
+    'unsigned short': TypeConversion('unsigned short', 'H', 'PyLong_FromUnsignedLong', 'PyLong_AsUnsignedLong'),
+    'unsigned int': TypeConversion('unsigned int', 'I', 'PyLong_FromUnsignedLong', 'PyLong_AsUnsignedLong'),
+    'unsigned long': TypeConversion('unsigned long', 'k', 'PyLong_FromUnsignedLong', 'PyLong_AsUnsignedLong'),
+    'unsigned long long': TypeConversion('unsigned long long', 'K', 'PyLong_FromLongUnsignedLong', 'PyLong_AsUnsignedLongLong'),
+    'float': TypeConversion('float', 'f', 'PyFloat_FromDouble', 'PyFloat_AsDouble'),
+    'double': TypeConversion('double', 'd', 'PyFloat_FromDouble', 'PyFloat_AsDouble'),
+    'std::string': TypeConversion('std::string', 's', 'PyUnicode_FromString', c_type='char*'),
+}
+
+
+container_types = {
+    # 'std::array': TypeConversion('std::array', 'O', c_type='PyObject*'),
+    'std::vector': TypeConversion('std::vector', 'O', c_type='PyObject*', insertion_function='emplace_back', reserve='reserve'),
+    'std::deque': TypeConversion('std::deque', 'O', c_type='PyObject*', insertion_function='emplace_back'),
+    'std::list': TypeConversion('std::list', 'O', c_type='PyObject*', insertion_function='emplace_back'),
+    'std::forward_list': TypeConversion('std::forward_list', 'O', c_type='PyObject*', insertion_function='push_front'),
+    'std::stack': TypeConversion('std::stack', 'O', c_type='PyObject*', insertion_function='emplace'),
+    'std::queue': TypeConversion('std::queue', 'O', c_type='PyObject*', insertion_function='emplace'),
+    'std::priority_queue': TypeConversion('std::priority_queue', 'O', c_type='PyObject*', insertion_function='emplace'),
+}
 
 
 def _parse_template(full_type):
@@ -17,7 +56,11 @@ def _convert_container_to_python(arg_type, layer_index, block=to_python_list_tem
     container, template_type = _parse_template(arg_type)
     insertion_function = container_types[container].insertion_function
 
-    block = block.format(previous_layer_index=previous_layer_index, layer_index=layer_index, next_layer_index=next_layer_index, insertion_function=insertion_function)
+    block = block.format(previous_layer_index=previous_layer_index,
+                         layer_index=layer_index,
+                         next_layer_index=next_layer_index,
+                         insertion_function=insertion_function)
+
     block = block.replace('}', '}}').replace('{', '{{')
 
     if template_type not in basic_types:
@@ -53,45 +96,6 @@ def _convert_container_from_python(name, arg_type, layer_index, block=from_pytho
         return block
 
     return block
-
-
-class TypeConversion:
-    def __init__(self, cpp_type, format_unit, to_python_function=None, from_python_function=None, c_type=None, insertion_function=None, reserve=None ):
-        self.cpp_type = cpp_type
-        self.c_type = c_type if c_type else cpp_type
-        self.format_unit = format_unit
-        self.to_python_function = to_python_function
-        self.from_python_function = from_python_function
-        self.insertion_function = insertion_function
-        self.reserve = reserve
-
-
-basic_types = {
-    'short': TypeConversion('short', 'h', 'PyLong_FromLong', 'PyLong_AsLong'),
-    'int': TypeConversion('int', 'i', 'PyLong_FromLong', 'PyLong_AsLong'),
-    'long': TypeConversion('long', 'l', 'PyLong_FromLong', 'PyLong_AsLong'),
-    'long long': TypeConversion('long long', 'L', 'PyLong_FromLongLong', 'PyLong_AsLongLong'),
-    'unsigned char': TypeConversion('unsigned char', 'b', 'PyLong_FromUnsignedLong', 'PyLong_AsUnsignedLong'),
-    'unsigned short': TypeConversion('unsigned short', 'H', 'PyLong_FromUnsignedLong', 'PyLong_AsUnsignedLong'),
-    'unsigned int': TypeConversion('unsigned int', 'I', 'PyLong_FromUnsignedLong', 'PyLong_AsUnsignedLong'),
-    'unsigned long': TypeConversion('unsigned long', 'k', 'PyLong_FromUnsignedLong', 'PyLong_AsUnsignedLong'),
-    'unsigned long long': TypeConversion('unsigned long long', 'K', 'PyLong_FromLongUnsignedLong', 'PyLong_AsUnsignedLongLong'),
-    'float': TypeConversion('float', 'f', 'PyFloat_FromDouble', 'PyFloat_AsDouble'),
-    'double': TypeConversion('double', 'd', 'PyFloat_FromDouble', 'PyFloat_AsDouble'),
-    'std::string': TypeConversion('std::string', 's', 'PyUnicode_FromString', c_type='char*'),
-}
-
-
-container_types = {
-    #'std::array': TypeConversion('std::array', 'O', c_type='PyObject*'),
-    'std::vector': TypeConversion('std::vector', 'O', c_type='PyObject*', insertion_function='emplace_back', reserve='reserve'),
-    'std::deque': TypeConversion('std::deque', 'O', c_type='PyObject*', insertion_function='emplace_back'),
-    'std::list': TypeConversion('std::list', 'O', c_type='PyObject*', insertion_function='emplace_back'),
-    'std::forward_list': TypeConversion('std::forward_list', 'O', c_type='PyObject*', insertion_function='push_front'),
-    'std::stack': TypeConversion('std::stack', 'O', c_type='PyObject*', insertion_function='emplace'),
-    'std::queue': TypeConversion('std::queue', 'O', c_type='PyObject*', insertion_function='emplace'),
-    'std::priority_queue': TypeConversion('std::priority_queue', 'O', c_type='PyObject*', insertion_function='emplace'),
-}
 
 
 def _make_wrapper(block_name, block_signature):
@@ -167,4 +171,3 @@ def create(filename, block_name, block_signature, block):
     with open(filename, 'w') as sf:
         block_wrapper_body = _make_wrapper(block_name, block_signature)
         sf.write(template.format(block_name=block_name, block=block, block_wrapper_body=block_wrapper_body, version=version))
-

@@ -3,7 +3,7 @@ template = '''
 #
 from setuptools import setup, Extension
 module1 = Extension('{block_name}',
-                    sources = ['{source}'],
+                    sources = [{source!r}],
                     include_dirs = [{include_dirs}],
                     define_macros = [{define_macros}],
                     undef_macros = [{undef_macros}],

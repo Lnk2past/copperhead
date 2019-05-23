@@ -7,7 +7,7 @@ python --> snake --> copperhead --> __c__ o __pp__ erhead --> __cpp__ --> __C++_
 ```copperhead``` is a dynamic code generator that allows C++ code blocks to be written and executed within Python. Ultimately the code is wrapped and built into a module using ```setuptools```. ```copperhead``` is great for prototyping and "what-if" exploration. I would not necessarily recommend using it directly for production code and environments, but it is something that can aid in developing production/release grade modules and libraries.
 
 ## Installation
-For the latest release:
+For the latest release (THE ONLY RELEASE RIGHT NOW IS A PRERELEASE!):
 ```
 pip install copperhead
 ```
@@ -43,11 +43,13 @@ The setup script is just a *setup.py* script that we populate with a few bits of
 The newly created *setup.py* script is used for generating the module. It will dump the new modules locally in a directory named *.copperhead\_cache*. Your path will be adjusted to include the newly generated egg. If the egg already exists, this process is skipped and you will simply import what is already available. Note that the *function* is returned, not the module.
 
 ## Development Environment
-I am coding this to work with latest Python and with modern C++ techniques. I have ~~absolutely no~~ little interest in backwards compatibility. While earlier versions and standards may work right now, I do not guarantee any of that moving forward. I will not hinder development for the sake of supporting something older.
+I am coding this to work with latest Python and with modern C++ techniques. I have ~~absolutely no~~ little interest in backwards compatibility. While earlier versions and standards may work right now, I do not guarantee any of that moving forward. I will not hinder development for the sake of supporting something older. Given the range of development environments currently at my disposal there will be some compatibility for a bit.
 
-I have two primary development environments at the moment and so you can for expect support for at least the following:
+I have a few primary development environments at the moment and so you can for expect support for at least the following:
 - **Python 3.5.3** and GCC 6.3.0 (Raspbian)
 - **Python 3.6.7** and GCC 7.3.0 (Ubuntu 18.04.2)
+- **Python 3.6.8** and MSVC v1916 (Windows 10, Visual C++ 2017 (15.9))
+- **Python 3.7.3** and MSVC v1916 (Windows 10, Visual C++ 2017 (15.9))
 
 ## Basic Usage
 ### Hello World!
