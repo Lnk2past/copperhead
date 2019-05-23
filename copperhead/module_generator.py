@@ -40,8 +40,8 @@ def generate(block_name, block_signature, block=None, block_file=None, config={}
     if not block and not block_file:
         raise TypeError('generate() missing 1 required keyword argument: \'block\' or \'block_file\'')
 
-    this_cache_dir = pathlib.Path(cache_dir, block_name).resolve().absolute()
-    os.makedirs(this_cache_dir, exist_ok=True)
+    this_cache_dir = pathlib.Path(cache_dir, block_name).absolute()
+    this_cache_dir.mkdir(parents=True, exist_ok=True)
 
     config_file = '.copperhead.json'
     if os.path.exists(config_file):
@@ -56,11 +56,10 @@ def generate(block_name, block_signature, block=None, block_file=None, config={}
                 block = bfile.read()
 
         source = this_cache_dir / (block_name + '_block.cpp')
-
-        create_code(source, block_name, block_signature, block)
+        create_code(str(source), block_name, block_signature, block)
 
         setup = this_cache_dir / (block_name + '_setup.py')
-        create_setup(setup, block_name, source._str, config)
+        create_setup(str(setup), block_name, str(source), config)
 
         if 'PYTHONPATH' not in os.environ:
             os.environ['PYTHONPATH'] = ''
@@ -76,7 +75,7 @@ def generate(block_name, block_signature, block=None, block_file=None, config={}
 
 def _get_egg(directory):
     """Blindly find and return the first egg we find"""
-    eggs = glob.glob(os.path.join(directory, '*.egg'))
+    eggs = list(directory.glob('*.egg'))
     if eggs:
-        return eggs[0]
+        return str(eggs[0])
     return ''
