@@ -1,4 +1,5 @@
-python3 examples/basics.py
-python3 examples/stl_containers.py
-python3 examples/file.py
-python3 examples/fractal.py
+set -x
+python examples/basics.py
+python examples/stl_containers.py
+python examples/file.py
+python examples/fractal.py
