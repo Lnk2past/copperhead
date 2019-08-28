@@ -18,5 +18,18 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     license=about['__license__'],
-    url=about['__url__']
+    url=about['__url__'],
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+        'Programming Language :: C',
+        'Programming Language :: C++',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3 :: Only'
+        'Programming Language :: Python :: Implementation',
+        'Topic :: Software Development :: Code Generators',
+        'Topic :: Software Development :: Libraries :: Python Modules'
+    ]
 )
