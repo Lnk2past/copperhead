@@ -1,3 +1,6 @@
 **/.copperhead_cache
 **/__pycache__
 *.pyc
+build
+dist
+copperhead.egg-info
