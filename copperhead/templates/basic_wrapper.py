@@ -1,12 +1,12 @@
 template = '''
-// this code is automatically generated from cooperhead {version}
+// this code is automatically generated from copperhead {version}
 #include <Python.h>
 #include <stdexcept>
 
 static PyObject *{block_name}Error;
 
 //**************************************
-// this is the start injected code block
+// this is the start of the injected code block
 {block}
 //**************************************
 

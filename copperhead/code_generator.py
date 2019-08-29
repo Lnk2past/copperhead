@@ -44,6 +44,10 @@ container_types = {
 }
 
 
+def _indent_block(block, indent):
+    return block.replace('\n', '\n' + '    '*indent)
+
+
 def _parse_template(full_type):
     template_type_re = re.compile('(.*?)<(.*)>')
     return (template_type_re.search(full_type).group(1), template_type_re.search(full_type).group(2))
@@ -56,22 +60,20 @@ def _convert_container_to_python(arg_type, layer_index, block=to_python_list_tem
     container, template_type = _parse_template(arg_type)
     insertion_function = container_types[container].insertion_function
 
-    block = block.format(previous_layer_index=previous_layer_index,
-                         layer_index=layer_index,
-                         next_layer_index=next_layer_index,
-                         insertion_function=insertion_function)
-
+    block = block.format(**locals())
     block = block.replace('}', '}}').replace('{', '{{')
 
     if template_type not in basic_types:
-        new_layer_type = to_python_list_intermediate_template.format(layer_index=layer_index, next_layer_index=next_layer_index)
-        block = block.replace('<next_layer>', new_layer_type + to_python_list_template)
+        new_layer_type = to_python_list_intermediate_template.format(**locals())
+        new_block = _indent_block(new_layer_type + to_python_list_template, next_layer_index)
+        block = block.replace('<next_layer>', new_block)
         block = _convert_container_to_python(template_type, next_layer_index, block)
-        block = block.replace('<finalize_set>', to_python_list_intermediate_template_2.format(layer_index=layer_index, next_layer_index=next_layer_index))
+        block = block.replace('<finalize_set>', to_python_list_intermediate_template_2.format(**locals()))
     else:
         to_python_function = basic_types[template_type].to_python_function
-        block = block.replace('<next_layer>', to_python_list_inner_template.format(layer_index=layer_index, next_layer_index=next_layer_index, to_python_function=to_python_function))
-        block = block.replace('<finalize_set>', '', 1)
+        new_block = _indent_block(to_python_list_inner_template.format(**locals()), next_layer_index-1)
+        block = block.replace('<next_layer>', new_block)
+        block = block.replace('<finalize_set>\n', '', 1)
         return block
 
     return block
@@ -83,18 +85,20 @@ def _convert_container_from_python(name, arg_type, layer_index, block=from_pytho
     container, template_type = _parse_template(arg_type)
     insertion_function = container_types[container].insertion_function
 
-    block = block.format(name=name, layer_index=layer_index, next_layer_index=next_layer_index, insertion_function=insertion_function)
+    block = block.format(**locals())
     block = block.replace('}', '}}').replace('{', '{{')
 
     if template_type not in basic_types:
-        new_layer_type = from_python_list_intermediate_template.format(name=name, layer_index=layer_index, next_layer_index=next_layer_index)
-        block = block.replace('<next_layer>', new_layer_type + from_python_list_template)
+        new_layer_type = from_python_list_intermediate_template.format(**locals())
+        new_block = _indent_block(new_layer_type + from_python_list_template, next_layer_index)
+        block = block.replace('<next_layer>', new_block)
         block = _convert_container_from_python(name, template_type, next_layer_index, block)
     else:
         from_python_function = basic_types[template_type].from_python_function
-        block = block.replace('<next_layer>', from_python_list_inner_template.format(name=name, layer_index=layer_index, next_layer_index=next_layer_index, from_python_function=from_python_function))
+        new_block = _indent_block(from_python_list_inner_template.format(**locals()), next_layer_index-1)
+        block = block.replace('<next_layer>', new_block)
         return block
-
+        
     return block
 
 
@@ -130,7 +134,7 @@ def _make_wrapper(block_name, block_signature):
             arg_name += 1
 
         args_str = ', '.join(['&{}'.format(arg) for arg in args])
-        wrapper_body += '        if (!PyArg_ParseTuple(args, "{}", {})) return NULL;\n'.format(format_str, args_str)
+        wrapper_body += '        if (!PyArg_ParseTuple(args, "{}", {})) return nullptr;\n'.format(format_str, args_str)
 
         for conversion_arg in conversion_args:
             name, arg_type = conversion_arg
@@ -145,7 +149,7 @@ def _make_wrapper(block_name, block_signature):
     if return_type != 'void':
         return_value = 'auto return_value_raw = '
 
-    wrapper_body += '        {}{}({});\n'.format(return_value, block_name, ','.join(args))
+    wrapper_body += '\n        {}{}({});\n'.format(return_value, block_name, ','.join(args))
 
     if return_type == 'void':
         wrapper_body += '        Py_RETURN_NONE;'
@@ -170,4 +174,4 @@ def _make_wrapper(block_name, block_signature):
 def create(filename, block_name, block_signature, block):
     with open(filename, 'w') as sf:
         block_wrapper_body = _make_wrapper(block_name, block_signature)
-        sf.write(template.format(block_name=block_name, block=block, block_wrapper_body=block_wrapper_body, version=version))
+        sf.write(template.format(**locals(), version=version))
