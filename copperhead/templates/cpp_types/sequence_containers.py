@@ -1,10 +1,16 @@
-class SequenceContainer:
-    def __init__(self, cpp_type, format_unit, to_python_function=None, from_python_function=None, c_type=None, insertion_function=None, get_size_function=None):
-        self.cpp_type = cpp_type
-        self.c_type = c_type if c_type else cpp_type
-        self.format_unit = format_unit
-        self.to_python_function = to_python_function
-        self.from_python_function = from_python_function
+from .cpp_type import base_cpp_type
+
+
+class SequenceContainer(base_cpp_type):
+    def __init__(self, cpp_type, insertion_function, get_size_function):
+        super().__init__(cpp_type, 'PyObject*', 'O')
         self.insertion_function = insertion_function
         self.get_size_function = get_size_function
 
+
+types = {
+    'std::deque': SequenceContainer('std::deque', '{variable}.emplace_back()', '{variable}.size()'),
+    'std::forward_list': SequenceContainer('std::forward_list', '{variable}.push_front()', '{variable}.size()'),
+    'std::list': SequenceContainer('std::list', '{variable}.emplace_back()', '{variable}.size()'),
+    'std::vector': SequenceContainer('std::vector', '{variable}.emplace_back()', '{variable}.size()'),
+}
