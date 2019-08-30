@@ -1,19 +1,25 @@
 import re
-
 from copperhead.__version__ import __version__ as version
 from copperhead.templates.basic_wrapper import template
-from copperhead.templates.container_conversions import *  # noqa: F403
+from copperhead.templates.container_conversions import \
+    to_python_list_template, \
+    to_python_list_intermediate_template, \
+    to_python_list_intermediate_template_2, \
+    to_python_list_inner_template, \
+    from_python_list_template, \
+    from_python_list_intermediate_template, \
+    from_python_list_inner_template
 
 
 class TypeConversion:
-    def __init__(self, cpp_type, format_unit, to_python_function=None, from_python_function=None, c_type=None, insertion_function=None, reserve=None):
+    def __init__(self, cpp_type, format_unit, to_python_function=None, from_python_function=None, c_type=None, insertion_function=None, get_size_function=None):
         self.cpp_type = cpp_type
         self.c_type = c_type if c_type else cpp_type
         self.format_unit = format_unit
         self.to_python_function = to_python_function
         self.from_python_function = from_python_function
         self.insertion_function = insertion_function
-        self.reserve = reserve
+        self.get_size_function = get_size_function
 
 
 basic_types = {
@@ -33,14 +39,13 @@ basic_types = {
 
 
 container_types = {
-    # 'std::array': TypeConversion('std::array', 'O', c_type='PyObject*'),
-    'std::vector': TypeConversion('std::vector', 'O', c_type='PyObject*', insertion_function='emplace_back', reserve='reserve'),
-    'std::deque': TypeConversion('std::deque', 'O', c_type='PyObject*', insertion_function='emplace_back'),
-    'std::list': TypeConversion('std::list', 'O', c_type='PyObject*', insertion_function='emplace_back'),
-    'std::forward_list': TypeConversion('std::forward_list', 'O', c_type='PyObject*', insertion_function='push_front'),
-    'std::stack': TypeConversion('std::stack', 'O', c_type='PyObject*', insertion_function='emplace'),
-    'std::queue': TypeConversion('std::queue', 'O', c_type='PyObject*', insertion_function='emplace'),
-    'std::priority_queue': TypeConversion('std::priority_queue', 'O', c_type='PyObject*', insertion_function='emplace'),
+    'std::vector': TypeConversion('std::vector', 'O', c_type='PyObject*', insertion_function='{variable}.emplace_back()', get_size_function='{variable}.size()'),
+    'std::deque': TypeConversion('std::deque', 'O', c_type='PyObject*', insertion_function='{variable}.emplace_back()', get_size_function='{variable}.size()'),
+    'std::list': TypeConversion('std::list', 'O', c_type='PyObject*', insertion_function='{variable}.emplace_back()', get_size_function='{variable}.size()'),
+    'std::forward_list': TypeConversion('std::forward_list', 'O', c_type='PyObject*', insertion_function='{variable}.push_front()', get_size_function='{variable}.size()'),
+    'std::stack': TypeConversion('std::stack', 'O', c_type='PyObject*', insertion_function='{variable}.emplace()', get_size_function='{variable}.size()'),
+    'std::queue': TypeConversion('std::queue', 'O', c_type='PyObject*', insertion_function='{variable}.emplace()', get_size_function='{variable}.size()'),
+    'std::priority_queue': TypeConversion('std::priority_queue', 'O', c_type='PyObject*', insertion_function='{variable}.emplace()', get_size_function='{variable}.size()'),
 }
 
 
@@ -50,7 +55,8 @@ def _indent_block(block, indent):
 
 def _parse_template(full_type):
     template_type_re = re.compile('(.*?)<(.*)>')
-    return (template_type_re.search(full_type).group(1), template_type_re.search(full_type).group(2))
+    searches = template_type_re.search(full_type)
+    return (searches.group(1), searches.group(2))
 
 
 def _convert_container_to_python(arg_type, layer_index, block=to_python_list_template):
@@ -58,7 +64,8 @@ def _convert_container_to_python(arg_type, layer_index, block=to_python_list_tem
     next_layer_index = 1 if not layer_index else layer_index+1
 
     container, template_type = _parse_template(arg_type)
-    insertion_function = container_types[container].insertion_function
+    variable = 'return_value_raw{}'.format(layer_index)
+    get_size_function = container_types[container].get_size_function.format(variable=variable)
 
     block = block.format(**locals())
     block = block.replace('}', '}}').replace('{', '{{')
@@ -73,7 +80,7 @@ def _convert_container_to_python(arg_type, layer_index, block=to_python_list_tem
         to_python_function = basic_types[template_type].to_python_function
         new_block = _indent_block(to_python_list_inner_template.format(**locals()), next_layer_index-1)
         block = block.replace('<next_layer>', new_block)
-        block = block.replace('<finalize_set>\n', '', 1)
+        block = block.replace('<finalize_set>', '', 1)
         return block
 
     return block
@@ -83,7 +90,8 @@ def _convert_container_from_python(name, arg_type, layer_index, block=from_pytho
     next_layer_index = 1 if not layer_index else layer_index+1
 
     container, template_type = _parse_template(arg_type)
-    insertion_function = container_types[container].insertion_function
+    variable = '{}_container{}'.format(name, layer_index)
+    insertion_function = container_types[container].insertion_function.format(variable=variable)
 
     block = block.format(**locals())
     block = block.replace('}', '}}').replace('{', '{{')
@@ -98,13 +106,14 @@ def _convert_container_from_python(name, arg_type, layer_index, block=from_pytho
         new_block = _indent_block(from_python_list_inner_template.format(**locals()), next_layer_index-1)
         block = block.replace('<next_layer>', new_block)
         return block
-        
+
     return block
 
 
 def _make_wrapper(block_name, block_signature):
     return_type_re = re.compile(r'(.*)\(')
     args_type_list_re = re.compile(r'.*\((.*)\)')
+    arg_strippable_re = re.compile(r'const|volatile|&')
 
     return_type = return_type_re.search(block_signature).group(1).strip()
     args_type_list = [arg.strip() for arg in args_type_list_re.search(block_signature).group(1).split(',')]
@@ -117,6 +126,7 @@ def _make_wrapper(block_name, block_signature):
         arg_name = 65
         conversion_args = []
         for arg_type in args_type_list:
+            arg_type = re.sub(arg_strippable_re, '', arg_type)
             if arg_type in basic_types:
                 format_str += basic_types[arg_type].format_unit
                 python_type = basic_types[arg_type].c_type
@@ -142,7 +152,7 @@ def _make_wrapper(block_name, block_signature):
             block = '        {arg_type} {name}_container;\n'.format(arg_type=arg_type, name=name)
             block += _convert_container_from_python(name, arg_type, '')
             wrapper_body += block.format()
-
+            
             args[args.index(name)] = '{name}_container'.format(name=name)
 
     return_value = ''

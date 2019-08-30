@@ -12,7 +12,7 @@ to_python_list_template = r'''
 
 # this intermediate template is used for inserting a new PyListObject above a loop as needed
 to_python_list_intermediate_template = r'''
-        PyObject* return_value_list{next_layer_index} = PyList_New(return_value_raw{layer_index}.size());
+        PyObject* return_value_list{next_layer_index} = PyList_New({get_size_function});
 '''.rstrip()
 
 
@@ -20,6 +20,7 @@ to_python_list_intermediate_template = r'''
 to_python_list_intermediate_template_2 = r'''
         PyList_SET_ITEM(return_value_list{layer_index}, pos{layer_index}, return_value_list{next_layer_index});
 '''.rstrip()
+
 
 # this is the inner template for setting the converted value (as opposed to nesting another list)
 to_python_list_inner_template = r'''
@@ -33,7 +34,7 @@ from_python_list_template = r'''
         // iterate across the list, current layer={layer_index} (empty means 1st)
         for (Py_ssize_t i{layer_index} {{0}}; i{layer_index} < PyList_Size({name}{layer_index}); i{layer_index}++)
         {{
-            {name}_container{layer_index}.{insertion_function}();
+            {insertion_function};
             auto &{name}_container{next_layer_index} = {name}_container{layer_index}.back();
             <next_layer>
         }}

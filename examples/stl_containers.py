@@ -12,7 +12,7 @@ print('Test 1')
 test1 = r'''
 #include <iostream>
 #include <vector>
-void vprint(std::vector<int> v)
+void vprint(const std::vector<int> &v)
 {
     for (auto i : v)
     {
@@ -74,10 +74,10 @@ test4 = r'''
 void qs(std::deque<double> deq, std::queue<double> c1)
 {
     std::cout << c1.size() << '\n';
- 
+
     std::queue<double> c2(c1);
     std::cout << c2.size() << '\n';
- 
+
     std::queue<double> c3(deq);
     std::cout << c3.size() << '\n';
 }'''
