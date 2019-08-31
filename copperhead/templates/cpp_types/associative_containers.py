@@ -9,8 +9,8 @@ class AssociativeContainer(base_cpp_type):
 
 
 types = {
-    # 'std::map': AssociativeContainer('std::map', ),
-    # 'std::multimap': AssociativeContainer('std::multimap', ),
-    # 'std::set': AssociativeContainer('std::set', ),
-    # 'std::multiset': AssociativeContainer('std::multiset', ),
+    # 'std::map': AssociativeContainer('std::map', '{variable}.emplace()', '{variable}.size()'),
+    # 'std::multimap': AssociativeContainer('std::multimap', '{variable}.emplace()', '{variable}.size()'),
+    # 'std::set': AssociativeContainer('std::set', '{variable}.emplace()', '{variable}.size()'),
+    # 'std::multiset': AssociativeContainer('std::multiset', '{variable}.emplace()', '{variable}.size()'),
 }
