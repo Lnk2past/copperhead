@@ -175,20 +175,3 @@ Note that the [example code](examples/fractal.py) in this repository uses ```h =
 
 ## License
 See [LICENSE.md](LICENSE.md) for the specifics, but it is an MIT license.
-
-## TODO
-Lots:
-- more readme updates
-- dynamically generate wrapping function
-   - support more simple types (various char types?)
-   - support STL container converions (std::map, std::unordered_map, std::array)
-   - support cv-qualifiers, pointers & references
-   - improve error handling
-- add support to expose more than 1 function per call to generate
-- develop uniqueness in cache rather than basing on name
-- add configurable options
-    - compiler flags
-    - link flags
-    - additional includes
-    - etc.
-- provide official benchmarking results between Python and C++
