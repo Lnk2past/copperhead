@@ -21,4 +21,3 @@ types = {
     'float': Primitive('float', 'f', 'PyFloat_FromDouble', 'PyFloat_AsDouble'),
     'double': Primitive('double', 'd', 'PyFloat_FromDouble', 'PyFloat_AsDouble'),
 }
-

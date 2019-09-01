@@ -54,6 +54,9 @@ def _convert_container_from_python(name, arg_type, layer_index, block=from_pytho
     next_layer_index = 1 if not layer_index else layer_index+1
 
     container, template_type = _parse_template(arg_type)
+    if block == from_python_list_template and hasattr(cpp_types.container_types[container], 'from_python_list_template'):
+        block = cpp_types.container_types[container].from_python_list_template
+
     variable = '{}_container{}'.format(name, layer_index)
     insertion_function = cpp_types.container_types[container].insertion_function.format(variable=variable)
 
@@ -61,13 +64,25 @@ def _convert_container_from_python(name, arg_type, layer_index, block=from_pytho
     block = block.replace('}', '}}').replace('{', '{{')
 
     if template_type not in cpp_types.basic_types:
-        new_layer_type = from_python_list_intermediate_template.format(**locals())
-        new_block = _indent_block(new_layer_type + from_python_list_template, next_layer_index)
+        t1 = from_python_list_intermediate_template
+        if hasattr(cpp_types.container_types[container], 'from_python_list_intermediate_template'):
+            t1 = cpp_types.container_types[container].from_python_list_intermediate_template
+
+        t2 = from_python_list_template
+        if hasattr(cpp_types.container_types[container], 'from_python_list_template'):
+            t2 = cpp_types.container_types[container].from_python_list_template
+
+        new_layer_type = t1.format(**locals())
+        new_block = _indent_block(new_layer_type + t2, next_layer_index)
         block = block.replace('<next_layer>', new_block)
         block = _convert_container_from_python(name, template_type, next_layer_index, block)
     else:
+        t3 = from_python_list_inner_template
+        if hasattr(cpp_types.container_types[container], 'from_python_list_inner_template'):
+            t3 = cpp_types.container_types[container].from_python_list_inner_template
+
         from_python_function = cpp_types.basic_types[template_type].from_python_function
-        new_block = _indent_block(from_python_list_inner_template.format(**locals()), next_layer_index-1)
+        new_block = _indent_block(t3.format(**locals()), next_layer_index-1)
         block = block.replace('<next_layer>', new_block)
         return block
 
@@ -137,7 +152,8 @@ def _make_wrapper(block_name, block_signature):
                 if return_type.startswith(cpp_type):
                     break
 
-            block = '        PyObject* return_value_list = PyList_New(return_value_raw.size());'
+            get_size_function = cpp_types.container_types[cpp_type].get_size_function.format(variable='return_value_raw')
+            block = '        PyObject* return_value_list = PyList_New({get_size_function});'.format(get_size_function=get_size_function)
             block += _convert_container_to_python(return_type, '')
             wrapper_body += block.format()
             wrapper_body += '        return return_value_list;'
