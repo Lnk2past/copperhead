@@ -24,10 +24,20 @@ def _parse_template(full_type):
 
 
 def _convert_container_to_python(arg_type, layer_index, block=to_python_list_template):
-    previous_layer_index = '' if (layer_index in ['', 1]) else layer_index-1
+    if layer_index == '':
+        previous_layer_index = ''
+        layer_index = 1
+    elif layer_index == 1:
+        previous_layer_index = ''
+    else:
+        previous_layer_index = layer_index - 1
+
     next_layer_index = 1 if not layer_index else layer_index+1
 
     container, template_type = _parse_template(arg_type)
+    if block == to_python_list_template and hasattr(cpp_types.container_types[container], 'to_python_list_template'):
+        block = cpp_types.container_types[container].to_python_list_template
+
     variable = 'return_value_raw{}'.format(layer_index)
     get_size_function = cpp_types.container_types[container].get_size_function.format(variable=variable)
 
@@ -35,14 +45,26 @@ def _convert_container_to_python(arg_type, layer_index, block=to_python_list_tem
     block = block.replace('}', '}}').replace('{', '{{')
 
     if template_type not in cpp_types.basic_types:
+        t1 = to_python_list_template
+        if hasattr(cpp_types.container_types[container], 'to_python_list_template'):
+            t1 = cpp_types.container_types[container].to_python_list_template
+
+        t2 = to_python_list_intermediate_template_2
+        if hasattr(cpp_types.container_types[container], 'to_python_list_intermediate_template_2'):
+            t2 = cpp_types.container_types[container].to_python_list_intermediate_template_2
+
         new_layer_type = to_python_list_intermediate_template.format(**locals())
-        new_block = _indent_block(new_layer_type + to_python_list_template, next_layer_index)
+        new_block = _indent_block(new_layer_type + t1, next_layer_index)
         block = block.replace('<next_layer>', new_block)
         block = _convert_container_to_python(template_type, next_layer_index, block)
-        block = block.replace('<finalize_set>', to_python_list_intermediate_template_2.format(**locals()))
+        block = block.replace('<finalize_set>', t2.format(**locals()))
     else:
+        t3 = to_python_list_inner_template
+        if hasattr(cpp_types.container_types[container], 'to_python_list_inner_template'):
+            t3 = cpp_types.container_types[container].to_python_list_inner_template
+
         to_python_function = cpp_types.basic_types[template_type].to_python_function
-        new_block = _indent_block(to_python_list_inner_template.format(**locals()), next_layer_index-1)
+        new_block = _indent_block(t3.format(**locals()), next_layer_index-1)
         block = block.replace('<next_layer>', new_block)
         block = block.replace('<finalize_set>', '', 1)
         return block

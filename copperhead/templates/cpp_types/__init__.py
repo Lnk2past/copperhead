@@ -15,6 +15,5 @@ container_types = {}
 # container_types.update(collections)
 container_types.update(container_adapters)
 container_types.update(sequence_containers)
-container_types.update(strings)
 # container_types.update(unordered_associative_containers)
 

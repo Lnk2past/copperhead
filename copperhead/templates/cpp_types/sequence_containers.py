@@ -8,7 +8,6 @@ class SequenceContainer(base_cpp_type):
         self.insertion_function = insertion_function
         self.get_size_function = get_size_function
 
-    # this is the primary loop template for converting from a Python list
     from_python_list_template = r'''
         // iterate across the list, current layer={layer_index} (empty means 1st)
         for (Py_ssize_t i{layer_index} {{0}}; i{layer_index} < PyList_Size({name}{layer_index}); i{layer_index}++)
