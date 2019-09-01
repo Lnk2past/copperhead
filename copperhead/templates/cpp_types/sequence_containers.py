@@ -15,12 +15,18 @@ class SequenceContainer(base_cpp_type):
             auto &{name}_container{next_layer_index} = *{insertion_function};
             <next_layer>
         }}
-    '''
+'''
 
     from_python_list_inner_template = r'''
             PyObject *pyvalue = PyList_GetItem({name}{layer_index}, i{layer_index});
             {name}_container{next_layer_index} = {from_python_function}(pyvalue);
-    '''
+'''
+
+    to_python_list_inner_template = r'''
+            PyObject *pyvalue = {to_python_function}(return_value_raw{layer_index});
+            PyList_SET_ITEM(return_value_list{previous_layer_index}, pos{layer_index}, pyvalue);
+'''
+
 
 
 types = {
