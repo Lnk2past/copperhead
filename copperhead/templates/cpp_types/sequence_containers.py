@@ -9,22 +9,22 @@ class SequenceContainer(base_cpp_type):
         self.get_size_function = get_size_function
 
     from_python_list_template = r'''
-        // iterate across the list, current layer={layer_index} (empty means 1st)
-        for (Py_ssize_t i{layer_index} {{0}}; i{layer_index} < PyList_Size({name}{layer_index}); i{layer_index}++)
-        {{
-            auto &{name}_container{next_layer_index} = *{insertion_function};
-            <next_layer>
-        }}
+// iterate across the list, current layer={layer_index} (empty means 1st)
+for (Py_ssize_t i{layer_index} {{0}}; i{layer_index} < PyList_Size({name}{layer_index}); i{layer_index}++)
+{{
+    auto &{name}_container{next_layer_index} = *{insertion_function};
+    <next_layer>
+}}
 '''
 
     from_python_list_inner_template = r'''
-            PyObject *pyvalue = PyList_GetItem({name}{layer_index}, i{layer_index});
-            {name}_container{next_layer_index} = {from_python_function}(pyvalue);
+PyObject *pyvalue = PyList_GetItem({name}{layer_index}, i{layer_index});
+{name}_container{next_layer_index} = {from_python_function}(pyvalue);
 '''
 
     to_python_list_inner_template = r'''
-            PyObject *pyvalue = {to_python_function}(return_value_raw{layer_index});
-            PyList_SET_ITEM(return_value_list{previous_layer_index}, pos{layer_index}, pyvalue);
+PyObject *pyvalue = {to_python_function}(return_value_raw{layer_index});
+PyList_SET_ITEM(return_value_list{previous_layer_index}, pos{layer_index}, pyvalue);
 '''
 
 
@@ -38,11 +38,11 @@ types = {
 
 
 from_python_list_forward_list_template = r'''
-    // iterate across the list, current layer={layer_index} (empty means 1st)
-    for (Py_ssize_t i{layer_index} {{PyList_Size({name}{layer_index}) - 1}}; i{layer_index} >= 0 ; i{layer_index}--)
-    {{
-        auto &{name}_container{next_layer_index} = *{insertion_function};
-        <next_layer>
-    }}
+// iterate across the list, current layer={layer_index} (empty means 1st)
+for (Py_ssize_t i{layer_index} {{PyList_Size({name}{layer_index}) - 1}}; i{layer_index} >= 0 ; i{layer_index}--)
+{{
+    auto &{name}_container{next_layer_index} = *{insertion_function};
+    <next_layer>
+}}
 '''
 types['std::forward_list'].from_python_list_template = from_python_list_forward_list_template

@@ -43,6 +43,7 @@ def _convert_container_to_python(arg_type, layer_index, block=to_python_list_tem
 
     block = block.format(**locals())
     block = block.replace('}', '}}').replace('{', '{{')
+    block = _indent_block(block, next_layer_index)
 
     if template_type not in cpp_types.basic_types:
         t1 = to_python_list_template
@@ -64,7 +65,7 @@ def _convert_container_to_python(arg_type, layer_index, block=to_python_list_tem
             t3 = cpp_types.container_types[container].to_python_list_inner_template
 
         to_python_function = cpp_types.basic_types[template_type].to_python_function
-        new_block = _indent_block(t3.format(**locals()), next_layer_index-1)
+        new_block = _indent_block(t3.format(**locals()), next_layer_index+1)
         block = block.replace('<next_layer>', new_block)
         block = block.replace('<finalize_set>', '', 1)
         return block
@@ -84,6 +85,7 @@ def _convert_container_from_python(name, arg_type, layer_index, block=from_pytho
 
     block = block.format(**locals())
     block = block.replace('}', '}}').replace('{', '{{')
+    block = _indent_block(block, next_layer_index+1)
 
     if template_type not in cpp_types.basic_types:
         t1 = from_python_list_intermediate_template
@@ -104,7 +106,7 @@ def _convert_container_from_python(name, arg_type, layer_index, block=from_pytho
             t3 = cpp_types.container_types[container].from_python_list_inner_template
 
         from_python_function = cpp_types.basic_types[template_type].from_python_function
-        new_block = _indent_block(t3.format(**locals()), next_layer_index-1)
+        new_block = _indent_block(t3.format(**locals()), next_layer_index+2)
         block = block.replace('<next_layer>', new_block)
         return block
 
@@ -178,7 +180,7 @@ def _make_wrapper(block_name, block_signature):
             block = '        PyObject* return_value_list = PyList_New({get_size_function});'.format(get_size_function=get_size_function)
             block += _convert_container_to_python(return_type, '')
             wrapper_body += block.format()
-            wrapper_body += '        return return_value_list;'
+            wrapper_body += 'return return_value_list;'
 
     return wrapper_body
 
