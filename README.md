@@ -97,7 +97,7 @@ Basic STL support is provided now, with more planned. Current support is provide
   - std::queue
   - std::stack
 
-You can pass and return these structues, as well as nest them.
+You can pass and return these structues, as well as nest them. Much more is planned, namely associative containers (and their unordered counterparts!).
 
 ### Mandelbrot: A Practical Example
 
