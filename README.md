@@ -1,25 +1,31 @@
 # copperhead
+
 [![Build Status](https://travis-ci.org/Lnk2past/copperhead.svg?branch=master)](https://travis-ci.org/Lnk2past/copperhead)
 
 python --> snake --> copperhead --> __c__ o __pp__ erhead --> __cpp__ --> __C++__
 
 ## Introduction
+
 ```copperhead``` is a dynamic code generator that allows C++ code blocks to be written and executed within Python. Ultimately the code is wrapped and built into a module using ```setuptools```. ```copperhead``` is great for prototyping and "what-if" exploration. I would not necessarily recommend using it directly for production code and environments, but it is something that can aid in developing production/release grade modules and libraries.
 
 ## Installation
+
 For the latest release from [PyPI](https://pypi.org/project/copperhead/):
-```
+
+```shell
 pip install copperhead
 ```
 
 For the latest dev, clone this repository and:
-```
+
+```shell
 python setup.py install
 ```
 
 ```copperhead``` will use the compiler that was used to build your Python installation, and so on older systems you may run into isues until I implement a way to pass compiler flags in (to perhaps revert the C++ standard to something older; right now defaults to C++14).
 
 ## Motivation
+
 First and foremost I wanted to learn more about the Python C API (something I have only really hit the surface of over the years). I also was watching CppCon videos [(this one in particular)](https://www.youtube.com/watch?v=nXaxk27zwlk) and I was fascinated when he (Chandler Carruth) started writing assmebly inline with his C++. I have never worked with C++ on that low a level, and it blew my mind a little. I thought to myself and wondered "what if I could write my C++ inline with my Python?". So here we are today.
 
 ```copperhead``` generates vanilla C++ code without depending on 3rd party C++ libraries. This is done *within Python*, not from a native library or set of headers. This is important, because it means that you can focus on writing the C++ and not on all of the boilerplate that comes with a set of native bindings, build systems, etc. You simply write your C++ and keep going. *That is it*.
@@ -27,8 +33,11 @@ First and foremost I wanted to learn more about the Python C API (something I ha
 When you are done using ```copperhead``` you are left with the raw *C++ and setup.py* files used to generate the extension in the first place. This means that you have something concrete, reusable, tweakable, etc. that is purely standard C++ and standard Python. Say what you will, but this is probably the best part about ```copperhead```.
 
 ## How It Works
+
 ### Code Generation
+
 ```copperhead``` works by automatically wrapping your C++ code in a new Python API enabled function and pairing it with the necessary code to pack it into a module that is compatible with Python. There are three primary steps to this process:
+
 1. Generate the function wrapper
 2. Generate the module
 3. Generate the setup script
@@ -40,19 +49,24 @@ The module is fairly cookie cutter at the moment and simply includes your C++ fu
 The setup script is just a *setup.py* script that we populate with a few bits of data, nothing special here.
 
 ### Installing & Importing C++ Modules
+
 The newly created *setup.py* script is used for generating the module. It will dump the new modules locally in a directory named *.copperhead\_cache*. Your path will be adjusted to include the newly generated egg. If the egg already exists, this process is skipped and you will simply import what is already available. Note that the *function* is returned, not the module.
 
 ## Development Environment
+
 I am coding this to work with latest Python and with modern C++ techniques. I have ~~absolutely no~~ little interest in backwards compatibility. While earlier versions and standards may work right now, I do not guarantee any of that moving forward. I will not hinder development for the sake of supporting something older. Given the range of development environments currently at my disposal there will be some compatibility for a bit.
 
 I have a few primary development environments at the moment and so you can for expect support for at least the following:
+
 - **Python 3.6.7** and GCC 7.3.0 (Ubuntu 18.04.2)
 - **Python 3.6.8** and MSVC v1916 (Windows 10, Visual C++ 2017 (15.9))
 - **Python 3.7.3** and MSVC v1916 (Windows 10, Visual C++ 2017 (15.9))
 - **Python 3.7.3** and GCC 6.3.0 (Raspbian)
 
 ## Basic Usage
-### Hello World!
+
+### Hello World
+
 Here is a simple example showing how to create your typical *Hello World!* program:
 
 ```python
@@ -71,29 +85,22 @@ hello_world()
 ```
 
 ### STL Support
-Basic STL support is provided now, with more planned. You can supply *std::vector*, *std::list*, *std::queue*, *std::deque* as return and parameter types, and can nest them within eachother.
 
-```python
-import copperhead as cpp
+Basic STL support is provided now, with more planned. Current support is provided for:
 
-std_vector_cpp = '''
-#include <iostream>
-#include <vector>
-void vprint(std::vector<int> v)
-{
-    for (auto i : v)
-    {
-        std::cout << i << " ";
-    }
-    std::cout << std::endl;
-}'''
+- sequence containers
+  - std::vector
+  - std::deque
+  - std::forward_list
+  - std::list
+- container adapters
+  - std::queue
+  - std::stack
 
-vprint = cpp.generate('vprint', 'void(std::vector<int>)', std_vector_cpp)
+You can pass and return these structues, as well as nest them.
 
-vprint([1,2,3,4,5])
-```
+### Mandelbrot: A Practical Example
 
-### Mandelbrot
 Want to generate the Mandelbrot Set? Awesome! You get to it and write a simple implementation to generate a file with the escape times:
 
 ```python
@@ -174,4 +181,5 @@ Running this you will see a good bit of jargon dumped to stdout: this is the cre
 Note that the [example code](examples/fractal.py) in this repository uses ```h = 0.005``` to reduce the runtime during testing.
 
 ## License
+
 See [LICENSE.md](LICENSE.md) for the specifics, but it is an MIT license.
