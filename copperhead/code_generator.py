@@ -140,10 +140,10 @@ def _make_wrapper(block_name, block_signature):
     if return_type == 'void':
         wrapper_body += '        Py_RETURN_NONE;'
     else:
-        if return_type in cpp_types.basic_types:
+        if return_type == 'std::string':
+            wrapper_body += '        return {}(return_value_raw0.c_str());'.format(cpp_types.basic_types[return_type].to_python_function)
+        elif return_type in cpp_types.basic_types:
             wrapper_body += '        return {}(return_value_raw0);'.format(cpp_types.basic_types[return_type].to_python_function)
-        elif return_type == 'std::string':
-            wrapper_body += '        return {}(return_value_raw0.c_str());'.format(cpp_types.container_types[return_type].to_python_function)
         else:
             for cpp_type in cpp_types.container_types.keys():
                 if return_type.startswith(cpp_type):

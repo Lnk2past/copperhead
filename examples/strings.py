@@ -12,10 +12,11 @@ config = {
 print('Test 1')
 src = '''
 #include <iostream>
-void greet(std::string name)
+std::string greet(std::string name)
 {
-   std::cout << "Hello, " << name << std::endl;
+   std::string str = "Hello " + name;
+   return str;
 }'''
-greet = cpp.generate('greet', 'void(std::string)', src, config=config)
-greet('bob')
+greet = cpp.generate('greet', 'std::string(std::string)', src, config=config)
+print(greet('bob'))
 print('')
