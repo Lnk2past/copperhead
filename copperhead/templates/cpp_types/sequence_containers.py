@@ -1,7 +1,6 @@
 from .cpp_type import base_cpp_type
 
 
-
 class SequenceContainer(base_cpp_type):
     def __init__(self, cpp_type, insertion_function, get_size_function):
         super().__init__(cpp_type, 'PyObject*', 'O')
@@ -47,7 +46,6 @@ PyObject* {name}{next_layer_index} = PyList_GetItem({name}{layer_index}, i{layer
 PyObject *pyvalue = PyList_GetItem({name}{layer_index}, i{layer_index});
 {name}_container{next_layer_index} = {from_python_function}(pyvalue);
 '''.rstrip('\n')
-
 
 
 types = {

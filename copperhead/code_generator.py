@@ -9,9 +9,15 @@ def _indent_block(block, indent):
 
 
 def _parse_template(full_type):
-    template_type_re = re.compile('(.*?)<(.*)>')
+    print(full_type)
+    template_type_re = re.compile('(.*?)<(.*)>', re.S)
     searches = template_type_re.search(full_type)
-    return (searches.group(1), searches.group(2))
+    containing_type = searches.group(1)
+    print(searches.group(1))
+    print(searches.group(2))
+
+    template_types = [a.strip() for a in searches.group(2).split(',')]
+    return (containing_type, template_types)
 
 
 def _get_indices(index):
@@ -19,10 +25,11 @@ def _get_indices(index):
         return -1, 1
     return index-1, index+1
 
+
 def _convert_container_to_python(arg_type, layer_index, block=None):
     previous_layer_index, next_layer_index = _get_indices(layer_index)
 
-    container, template_type = _parse_template(arg_type)
+    container, template_types = _parse_template(arg_type)
     if block is None:
         block = cpp_types.container_types[container].to_python_list_template
 
@@ -32,23 +39,24 @@ def _convert_container_to_python(arg_type, layer_index, block=None):
     block = block.format(**locals())
     block = block.replace('}', '}}').replace('{', '{{')
 
-    if template_type not in cpp_types.basic_types:
-        t1 = _indent_block(cpp_types.container_types[container].to_python_list_template, layer_index)
-        t2 = _indent_block(cpp_types.container_types[container].to_python_list_intermediate_template, layer_index)
-        t3 = _indent_block(cpp_types.container_types[container].to_python_list_intermediate_template_2, layer_index)
+    for template_type in template_types:
+        if template_type not in cpp_types.basic_types:
+            t1 = _indent_block(cpp_types.container_types[container].to_python_list_template, layer_index)
+            t2 = _indent_block(cpp_types.container_types[container].to_python_list_intermediate_template, layer_index)
+            t3 = _indent_block(cpp_types.container_types[container].to_python_list_intermediate_template_2, layer_index)
 
-        new_block = t2.format(**locals()) + t1
-        block = block.replace('<next_layer>', new_block)
-        block = _convert_container_to_python(template_type, next_layer_index, block)
-        block = block.replace('<finalize_set>', t3.format(**locals()), 1)
-    else:
-        t4 = _indent_block(cpp_types.container_types[container].to_python_list_inner_template, layer_index)
+            new_block = t2.format(**locals()) + t1
+            block = block.replace('<next_layer>', new_block)
+            block = _convert_container_to_python(template_type, next_layer_index, block)
+            block = block.replace('<finalize_set>', t3.format(**locals()), 1)
+        else:
+            t4 = _indent_block(cpp_types.container_types[container].to_python_list_inner_template, layer_index)
 
-        to_python_function = cpp_types.basic_types[template_type].to_python_function
-        new_block = t4.format(**locals())
-        block = block.replace('<next_layer>', new_block)
-        block = block.replace('<finalize_set>', '', 1)
-        return block
+            to_python_function = cpp_types.basic_types[template_type].to_python_function
+            new_block = t4.format(**locals())
+            block = block.replace('<next_layer>', new_block)
+            block = block.replace('<finalize_set>', '', 1)
+            return block
 
     return block
 
@@ -56,7 +64,7 @@ def _convert_container_to_python(arg_type, layer_index, block=None):
 def _convert_container_from_python(name, arg_type, layer_index, block=None):
     previous_layer_index, next_layer_index = _get_indices(layer_index)
 
-    container, template_type = _parse_template(arg_type)
+    container, template_types = _parse_template(arg_type)
     if block is None:
         block = cpp_types.container_types[container].from_python_list_template
 
@@ -66,32 +74,44 @@ def _convert_container_from_python(name, arg_type, layer_index, block=None):
     block = block.format(**locals())
     block = block.replace('}', '}}').replace('{', '{{')
 
-    if template_type not in cpp_types.basic_types:
-        t1 = cpp_types.container_types[container].from_python_list_intermediate_template
-        t2 = cpp_types.container_types[container].from_python_list_template
+    for template_type in template_types:
+        if template_type not in cpp_types.basic_types:
+            t1 = cpp_types.container_types[container].from_python_list_intermediate_template
+            t2 = cpp_types.container_types[container].from_python_list_template
 
-        new_layer_type = t1.format(**locals())
-        new_block = _indent_block(new_layer_type + t2, layer_index)
-        block = block.replace('<next_layer>', new_block)
-        block = _convert_container_from_python(name, template_type, next_layer_index, block)
-    else:
-        t3 = cpp_types.container_types[container].from_python_list_inner_template
+            new_layer_type = t1.format(**locals())
+            new_block = _indent_block(new_layer_type + t2, layer_index)
+            block = block.replace('<next_layer>', new_block)
+            block = _convert_container_from_python(name, template_type, next_layer_index, block)
+        else:
+            t3 = cpp_types.container_types[container].from_python_list_inner_template
 
-        from_python_function = cpp_types.basic_types[template_type].from_python_function
-        new_block = _indent_block(t3.format(**locals()), next_layer_index)
-        block = block.replace('<next_layer>', new_block)
-        return block
+            from_python_function = cpp_types.basic_types[template_type].from_python_function
+            new_block = _indent_block(t3.format(**locals()), next_layer_index)
+            block = block.replace('<next_layer>', new_block)
+            return block
 
     return block
 
 
 def _make_wrapper(block_name, block_signature):
     return_type_re = re.compile(r'(.*)\(')
-    args_type_list_re = re.compile(r'.*\((.*)\)')
+    args_type_list_re = re.compile(r'.*\((.*)?\)')
     arg_strippable_re = re.compile(r'const|volatile|&')
 
     return_type = return_type_re.search(block_signature).group(1).strip()
-    args_type_list = [arg.strip() for arg in args_type_list_re.search(block_signature).group(1).split(',')]
+    temp_args_type_list = [arg.strip() for arg in args_type_list_re.search(block_signature).group(1).split(',')]
+    args_type_list = []
+    tb = 0
+    for a in temp_args_type_list:
+        if tb > 0:
+            args_type_list[-1] += ',' + a
+            if '>' in a:
+                tb -= 1
+        else:
+            args_type_list.append(a)
+            if '<' in a:
+                tb += 1
 
     wrapper_body = ''
     args = []
@@ -127,7 +147,7 @@ def _make_wrapper(block_name, block_signature):
             block = '        {arg_type} {name}_container1;\n'.format(arg_type=arg_type, name=name)
             block += _indent_block(_convert_container_from_python(name, arg_type, 1), 2)
             wrapper_body += block.format()
-            
+
             args[args.index(name)] = '{name}_container'.format(name=name)
 
     return_value = ''
