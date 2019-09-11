@@ -55,13 +55,6 @@ The newly created *setup.py* script is used for generating the module. It will d
 
 I am coding this to work with latest Python and with modern C++ techniques. I have ~~absolutely no~~ little interest in backwards compatibility. While earlier versions and standards may work right now, I do not guarantee any of that moving forward. I will not hinder development for the sake of supporting something older. Given the range of development environments currently at my disposal there will be some compatibility for a bit.
 
-I have a few primary development environments at the moment and so you can for expect support for at least the following:
-
-- **Python 3.6.7** and GCC 7.3.0 (Ubuntu 18.04.2)
-- **Python 3.6.8** and MSVC v1916 (Windows 10, Visual C++ 2017 (15.9))
-- **Python 3.7.3** and MSVC v1916 (Windows 10, Visual C++ 2017 (15.9))
-- **Python 3.7.3** and GCC 6.3.0 (Raspbian)
-
 ## Basic Usage
 
 ### Hello World
