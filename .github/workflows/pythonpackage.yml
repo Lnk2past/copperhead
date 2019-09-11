@@ -1,4 +1,4 @@
-name: Python package
+name: Test
 
 on: [push]
 
@@ -16,6 +16,9 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install Copperhead
+      run: |
+        python setup.py install
     - name: Tests
       run: |
         python examples/basics.py
