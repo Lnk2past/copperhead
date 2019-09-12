@@ -1,5 +1,5 @@
 # copperhead
-[![Build Status](https://github.com/Lnk2past/copperhead/workflows/Build%20Examples/badge.svg)](https://github.com/Lnk2past/copperhead/actions) [![Build Status](https://travis-ci.org/Lnk2past/copperhead.svg?branch=master)](https://travis-ci.org/Lnk2past/copperhead)
+[![Build Status](https://github.com/Lnk2past/copperhead/workflows/Build%20Examples/badge.svg)](https://github.com/Lnk2past/copperhead/actions) [![Travis (.com)](https://img.shields.io/travis/com/Lnk2past/copperhead?label=Build%20Examples&logo=travis)](https://travis-ci.org/Lnk2past/copperhead)
 
 python --> snake --> copperhead --> __c__ o __pp__ erhead --> __cpp__ --> __C++__
 
