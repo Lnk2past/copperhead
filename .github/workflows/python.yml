@@ -27,3 +27,14 @@ jobs:
         python examples/stl_container_adapters.py
         python examples/file.py
         python examples/fractal.py
+    - name: Build Distribution
+      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      run: |
+        pip install wheel
+        python setup.py sdist bdist_wheel
+    - name: Publish to PyPI
+      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@v1.0.0a0
+      with:
+        user: __token__
+        password: ${{ secrets.sneaky_copperhead }}
