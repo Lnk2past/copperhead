@@ -29,7 +29,7 @@ PyObject* py_{block_name}(PyObject*, PyObject* args)
     {{
         PyErr_Print();
     }}
-    return nullptr;
+    Py_RETURN_NONE;
 }}
 
 // create the methods array
