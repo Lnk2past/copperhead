@@ -56,7 +56,7 @@ src = r'''
 #include <forward_list>
 #include <iostream>
 #include <numeric>
-std::forward_list<int> fwd_list_test(std::forward_list<int> v)
+std::forward_list<int> forward_list_test(std::forward_list<int> v)
 {
     std::partial_sum(std::begin(v), std::end(v), std::begin(v));
     for (auto i : v)
@@ -66,8 +66,8 @@ std::forward_list<int> fwd_list_test(std::forward_list<int> v)
     std::cout << std::endl;
     return v;
 }'''
-fwd_list_test = cpp.generate('fwd_list_test', 'std::forward_list<int>(std::forward_list<int>)', src, config=config)
-fwd_list_test([1, 2, 3, 4])
+forward_list_test = cpp.generate('forward_list_test', 'std::forward_list<int>(std::forward_list<int>)', src, config=config)
+forward_list_test([1, 2, 3, 4])
 print('')
 
 
