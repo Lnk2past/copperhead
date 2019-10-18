@@ -16,7 +16,8 @@ src = r'''
 #include <string>
 std::map<std::string, int> map_test(std::map<std::string, int> m)
 {
-    m["foobar"] = 10;
+    m["foo2"] = 10;
+    m["bar2"] = 20;
     return m;
 }'''
 map_test = cpp.generate('map_test', 'std::map<std::string, int>(std::map<std::string, int>)', src, config=config)

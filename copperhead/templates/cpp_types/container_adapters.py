@@ -20,7 +20,7 @@ while (!return_value_raw{previous_layer_index}.empty())
 '''.rstrip('\n')
 
     to_python_list_intermediate_template = r'''
-PyObject* return_value_list{layer_index} = PyList_New({get_size_function});
+auto return_value_list{layer_index} = PyList_New({get_size_function});
 '''.rstrip('\n')
 
 
@@ -29,7 +29,7 @@ PyList_SET_ITEM(return_value_list{previous_layer_index}, pos{layer_index}, retur
 '''.rstrip('\n')
 
     to_python_list_inner_template = r'''
-PyObject *pyvalue = {to_python_function}(return_value_raw{layer_index});
+auto pyvalue = {to_python_function}(return_value_raw{layer_index});
 PyList_SET_ITEM(return_value_list{previous_layer_index}, pos{layer_index}, pyvalue);
 '''.rstrip('\n')
 
@@ -44,11 +44,11 @@ for (Py_ssize_t i{layer_index} {{PyList_Size({name}{layer_index}) - 1}}; i{layer
 '''.rstrip('\n')
 
     from_python_list_intermediate_template = r'''
-PyObject* {name}{next_layer_index} = PyList_GetItem({name}{layer_index}, i{layer_index});
+auto {name}{next_layer_index} = PyList_GetItem({name}{layer_index}, i{layer_index});
 '''.rstrip('\n')
 
     from_python_list_inner_template = r'''
-PyObject *pyvalue = PyList_GetItem({name}{layer_index}, i{layer_index});
+auto pyvalue = PyList_GetItem({name}{layer_index}, i{layer_index});
 {name}_container{next_layer_index} = {from_python_function}(pyvalue);
 '''
 

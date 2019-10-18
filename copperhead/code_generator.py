@@ -9,12 +9,9 @@ def _indent_block(block, indent):
 
 
 def _parse_template(full_type):
-    print(full_type)
     template_type_re = re.compile('(.*?)<(.*)>', re.S)
     searches = template_type_re.search(full_type)
     containing_type = searches.group(1)
-    print(searches.group(1))
-    print(searches.group(2))
 
     template_types = [a.strip() for a in searches.group(2).split(',')]
     return (containing_type, template_types)
@@ -39,7 +36,8 @@ def _convert_container_to_python(arg_type, layer_index, block=None):
     block = block.format(**locals())
     block = block.replace('}', '}}').replace('{', '{{')
 
-    for template_type in template_types:
+    if len(template_types) == 1:
+        template_type = template_types[0]
         if template_type not in cpp_types.basic_types:
             t1 = _indent_block(cpp_types.container_types[container].to_python_list_template, layer_index)
             t2 = _indent_block(cpp_types.container_types[container].to_python_list_intermediate_template, layer_index)
@@ -57,6 +55,16 @@ def _convert_container_to_python(arg_type, layer_index, block=None):
             block = block.replace('<next_layer>', new_block)
             block = block.replace('<finalize_set>', '', 1)
             return block
+    elif container in cpp_types.associative_containers:
+        if container == 'std::map':
+            t4 = _indent_block(cpp_types.container_types[container].to_python_list_inner_template, layer_index)
+            to_python_function_key = cpp_types.basic_types[template_types[0]].to_python_function
+            to_python_function_value = cpp_types.basic_types[template_types[1]].to_python_function
+
+            new_block = t4.format(**locals())
+            block = block.replace('<next_layer>', new_block)
+            block = block.replace('<finalize_set>', '', 1)
+            return block
 
     return block
 
@@ -65,6 +73,7 @@ def _convert_container_from_python(name, arg_type, layer_index, block=None):
     previous_layer_index, next_layer_index = _get_indices(layer_index)
 
     container, template_types = _parse_template(arg_type)
+
     if block is None:
         block = cpp_types.container_types[container].from_python_list_template
 
@@ -74,7 +83,8 @@ def _convert_container_from_python(name, arg_type, layer_index, block=None):
     block = block.format(**locals())
     block = block.replace('}', '}}').replace('{', '{{')
 
-    for template_type in template_types:
+    if len(template_types) == 1:
+        template_type = template_types[0]
         if template_type not in cpp_types.basic_types:
             t1 = cpp_types.container_types[container].from_python_list_intermediate_template
             t2 = cpp_types.container_types[container].from_python_list_template
@@ -87,6 +97,14 @@ def _convert_container_from_python(name, arg_type, layer_index, block=None):
             t3 = cpp_types.container_types[container].from_python_list_inner_template
 
             from_python_function = cpp_types.basic_types[template_type].from_python_function
+            new_block = _indent_block(t3.format(**locals()), next_layer_index)
+            block = block.replace('<next_layer>', new_block)
+            return block
+    elif container in cpp_types.associative_containers:
+        if container == 'std::map':
+            t3 = cpp_types.container_types[container].from_python_list_inner_template
+            from_python_function_key = cpp_types.basic_types[template_types[0]].from_python_function
+            from_python_function_value = cpp_types.basic_types[template_types[1]].from_python_function
             new_block = _indent_block(t3.format(**locals()), next_layer_index)
             block = block.replace('<next_layer>', new_block)
             return block
@@ -143,7 +161,6 @@ def _make_wrapper(block_name, block_signature):
 
         for conversion_arg in conversion_args:
             name, arg_type = conversion_arg
-
             block = '        {arg_type} {name}_container1;\n'.format(arg_type=arg_type, name=name)
             block += _indent_block(_convert_container_from_python(name, arg_type, 1), 2)
             wrapper_body += block.format()
@@ -169,8 +186,12 @@ def _make_wrapper(block_name, block_signature):
                 if return_type.startswith(cpp_type):
                     break
 
-            get_size_function = cpp_types.container_types[cpp_type].get_size_function.format(variable='return_value_raw0')
-            block = '        PyObject* return_value_list0 = PyList_New({get_size_function});'.format(get_size_function=get_size_function)
+            block = '        '
+            if cpp_type in cpp_types.associative_containers:
+                block += 'PyObject* return_value_list0 = PyDict_New();'
+            else:
+                get_size_function = cpp_types.container_types[cpp_type].get_size_function.format(variable='return_value_raw0')
+                block += 'PyObject* return_value_list0 = PyList_New({get_size_function});'.format(get_size_function=get_size_function)
             block += _indent_block(_convert_container_to_python(return_type, 1), 2)
             wrapper_body += block.format()
             wrapper_body += '\n        return return_value_list0;'
