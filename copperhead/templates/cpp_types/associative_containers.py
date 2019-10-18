@@ -13,22 +13,22 @@ for (auto &return_value_raw{layer_index} : return_value_raw{previous_layer_index
     <next_layer>
     <finalize_set>
 }}
-'''.rstrip('\n')
+'''.strip('\n')
 
     to_python_list_intermediate_template = r'''
 auto return_value_list{layer_index} = PyDict_New();
-'''.rstrip('\n')
+'''.strip('\n')
 
     to_python_list_intermediate_template_2 = r'''
 auto pykey = {to_python_function}(return_value_raw{layer_index}.first);
 PyDict_SetItem(return_value_list{previous_layer_index}, pykey, return_value_list{layer_index});
-'''.rstrip('\n')
+'''.strip('\n')
 
     to_python_list_inner_template = r'''
 auto pykey{layer_index} = {to_python_function_key}(return_value_raw{layer_index}.first.c_str());
 auto pyvalue{layer_index} = {to_python_function_value}(return_value_raw{layer_index}.second);
 PyDict_SetItem(return_value_list{previous_layer_index}, pykey{layer_index}, pyvalue{layer_index});
-'''.rstrip('\n')
+'''.strip('\n')
 
     from_python_list_template = r'''
 Py_ssize_t ppos{layer_index} {{0}};
@@ -38,15 +38,15 @@ while (PyDict_Next({name}{layer_index}, &ppos{layer_index}, &pkey{layer_index}, 
 {{
     <next_layer>
 }}
-'''.rstrip('\n')
+'''.strip('\n')
 
     from_python_list_intermediate_template = r'''
 auto {name}{next_layer_index} = PyDict_GetItem({name}{layer_index}, i{layer_index});
-'''.rstrip('\n')
+'''.strip('\n')
 
     from_python_list_inner_template = r'''
 {variable}[{from_python_function_key}(pkey{layer_index})] = {from_python_function_value}(pvalue{layer_index});
-'''.rstrip('\n')
+'''.strip('\n')
 
 
 types = {

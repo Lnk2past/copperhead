@@ -44,7 +44,7 @@ src = '''
 #include <stdexcept>
 void bad()
 {
-   throw std::runtime_error("You broke me!");
+   throw std::runtime_error("You broke me! This is a good thing!");
 }'''
 cpp.generate('bad', 'void()', src, config=config)
 import bad  # noqa: E402

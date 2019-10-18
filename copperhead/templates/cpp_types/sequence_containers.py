@@ -15,20 +15,20 @@ for (auto & return_value_raw{layer_index} : return_value_raw{previous_layer_inde
     <finalize_set>
     ++pos{layer_index};
 }}
-'''.rstrip('\n')
+'''.strip('\n')
 
     to_python_list_intermediate_template = r'''
 PyObject* return_value_list{layer_index} = PyList_New({get_size_function});
-'''.rstrip('\n')
+'''.strip('\n')
 
     to_python_list_intermediate_template_2 = r'''
 PyList_SET_ITEM(return_value_list{previous_layer_index}, pos{layer_index}, return_value_list{layer_index});
-'''.rstrip('\n')
+'''.strip('\n')
 
     to_python_list_inner_template = r'''
 auto pyvalue = {to_python_function}(return_value_raw{layer_index});
 PyList_SET_ITEM(return_value_list{previous_layer_index}, pos{layer_index}, pyvalue);
-'''.rstrip('\n')
+'''.strip('\n')
 
     from_python_list_template = r'''
 for (Py_ssize_t i{layer_index} {{0}}; i{layer_index} < PyList_Size({name}{layer_index}); i{layer_index}++)
@@ -36,7 +36,7 @@ for (Py_ssize_t i{layer_index} {{0}}; i{layer_index} < PyList_Size({name}{layer_
     auto &{name}_container{next_layer_index} = *{insertion_function};
     <next_layer>
 }}
-'''.rstrip('\n')
+'''.strip('\n')
 
     from_python_list_intermediate_template = r'''
 auto {name}{next_layer_index} = PyList_GetItem({name}{layer_index}, i{layer_index});
@@ -45,7 +45,7 @@ auto {name}{next_layer_index} = PyList_GetItem({name}{layer_index}, i{layer_inde
     from_python_list_inner_template = r'''
 auto pyvalue = PyList_GetItem({name}{layer_index}, i{layer_index});
 {name}_container{next_layer_index} = {from_python_function}(pyvalue);
-'''.rstrip('\n')
+'''.strip('\n')
 
 
 types = {
@@ -63,5 +63,5 @@ for (Py_ssize_t i{layer_index} {{PyList_Size({name}{layer_index}) - 1}}; i{layer
     auto &{name}_container{next_layer_index} = *{insertion_function};
     <next_layer>
 }}
-'''
+'''.strip('\n')
 types['std::forward_list'].from_python_list_template = from_python_list_forward_list_template

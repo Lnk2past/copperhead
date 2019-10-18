@@ -4,8 +4,12 @@ from copperhead.__version__ import __version__ as version
 from copperhead.templates.basic_wrapper import template
 
 
+INDENT_1 = ' ' * 4
+INDENT_2 = INDENT_1 * 2
+
+
 def _indent_block(block, indent):
-    return block.replace('\n', '\n' + '    '*indent)
+    return block.replace('\n', '\n' + INDENT_1 * indent)
 
 
 def _parse_template(full_type):
@@ -97,7 +101,7 @@ def _convert_container_from_python(name, arg_type, layer_index, block=None):
             t3 = cpp_types.container_types[container].from_python_list_inner_template
 
             from_python_function = cpp_types.basic_types[template_type].from_python_function
-            new_block = _indent_block(t3.format(**locals()), next_layer_index)
+            new_block = _indent_block(t3.format(**locals()), layer_index)
             block = block.replace('<next_layer>', new_block)
             return block
     elif container in cpp_types.associative_containers:
@@ -151,20 +155,19 @@ def _make_wrapper(block_name, block_signature):
                         conversion_args.append((chr(arg_name), arg_type))
                         break
 
-            wrapper_body += '        {} {};\n'.format(python_type, chr(arg_name)+'1')
+            wrapper_body += INDENT_2 + '{} {};\n'.format(python_type, chr(arg_name)+'1')
 
             args.append(chr(arg_name))
             arg_name += 1
 
         args_str = ', '.join(['&{}1'.format(arg) for arg in args])
-        wrapper_body += '        if (!PyArg_ParseTuple(args, "{}", {})) return nullptr;\n'.format(format_str, args_str)
+        wrapper_body += INDENT_2 + 'if (!PyArg_ParseTuple(args, "{}", {})) return nullptr;\n'.format(format_str, args_str)
 
         for conversion_arg in conversion_args:
             name, arg_type = conversion_arg
-            block = '        {arg_type} {name}_container1;\n'.format(arg_type=arg_type, name=name)
-            block += _indent_block(_convert_container_from_python(name, arg_type, 1), 2)
+            block = INDENT_2 + '{arg_type} {name}_container1;\n'.format(arg_type=arg_type, name=name)
+            block += INDENT_2 + _indent_block(_convert_container_from_python(name, arg_type, 1), 2)
             wrapper_body += block.format()
-
             args[args.index(name)] = '{name}_container'.format(name=name)
 
     return_value = ''
@@ -172,29 +175,29 @@ def _make_wrapper(block_name, block_signature):
         return_value = 'auto return_value_raw0 = '
 
     args = ['{}1'.format(a) for a in args]
-    wrapper_body += '\n        {}{}({});\n'.format(return_value, block_name, ','.join(args))
+    wrapper_body += '\n' + INDENT_2 + '{}{}({});\n'.format(return_value, block_name, ','.join(args))
 
     if return_type == 'void':
-        wrapper_body += '        Py_RETURN_NONE;'
+        wrapper_body += 'Py_RETURN_NONE;'
     else:
         if return_type == 'std::string':
-            wrapper_body += '        return {}(return_value_raw0.c_str());'.format(cpp_types.basic_types[return_type].to_python_function)
+            wrapper_body += 'return {}(return_value_raw0.c_str());'.format(cpp_types.basic_types[return_type].to_python_function)
         elif return_type in cpp_types.basic_types:
-            wrapper_body += '        return {}(return_value_raw0);'.format(cpp_types.basic_types[return_type].to_python_function)
+            wrapper_body += 'return {}(return_value_raw0);'.format(cpp_types.basic_types[return_type].to_python_function)
         else:
             for cpp_type in cpp_types.container_types.keys():
                 if return_type.startswith(cpp_type):
                     break
 
-            block = '        '
+            block = INDENT_2
             if cpp_type in cpp_types.associative_containers:
-                block += 'PyObject* return_value_list0 = PyDict_New();'
+                block += 'PyObject* return_value_list0 = PyDict_New();\n'
             else:
                 get_size_function = cpp_types.container_types[cpp_type].get_size_function.format(variable='return_value_raw0')
-                block += 'PyObject* return_value_list0 = PyList_New({get_size_function});'.format(get_size_function=get_size_function)
-            block += _indent_block(_convert_container_to_python(return_type, 1), 2)
+                block += 'PyObject* return_value_list0 = PyList_New({get_size_function});\n'.format(get_size_function=get_size_function)
+            block += INDENT_2 + _indent_block(_convert_container_to_python(return_type, 1), 2)
             wrapper_body += block.format()
-            wrapper_body += '\n        return return_value_list0;'
+            wrapper_body += '\n' + INDENT_2 + 'return return_value_list0;'
 
     return wrapper_body
 

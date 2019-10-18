@@ -24,7 +24,7 @@ std::vector<int> vector_test(std::vector<int> v)
     std::cout << std::endl;
     return v;
 }'''
-vector_test = cpp.generate('vector_test', 'std::vector<int>(std::vector<int>)', src, config=config)
+vector_test = cpp.generate('vector_test', 'std::vector<int>(std::vector<int>)', src, config=config, rebuild=True)
 vector_test([1, 2, 3, 4])
 print('')
 
