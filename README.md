@@ -1,6 +1,5 @@
 # copperhead
-
-[![Build Status](https://travis-ci.org/Lnk2past/copperhead.svg?branch=master)](https://travis-ci.org/Lnk2past/copperhead)
+[![Build Status](https://github.com/Lnk2past/copperhead/workflows/Build/badge.svg)](https://github.com/Lnk2past/copperhead/actions) [![Travis (.com)](https://img.shields.io/travis/com/Lnk2past/copperhead?label=Build&logo=travis)](https://travis-ci.org/Lnk2past/copperhead)
 
 python --> snake --> copperhead --> __c__ o __pp__ erhead --> __cpp__ --> __C++__
 
@@ -55,13 +54,6 @@ The newly created *setup.py* script is used for generating the module. It will d
 ## Development Environment
 
 I am coding this to work with latest Python and with modern C++ techniques. I have ~~absolutely no~~ little interest in backwards compatibility. While earlier versions and standards may work right now, I do not guarantee any of that moving forward. I will not hinder development for the sake of supporting something older. Given the range of development environments currently at my disposal there will be some compatibility for a bit.
-
-I have a few primary development environments at the moment and so you can for expect support for at least the following:
-
-- **Python 3.6.7** and GCC 7.3.0 (Ubuntu 18.04.2)
-- **Python 3.6.8** and MSVC v1916 (Windows 10, Visual C++ 2017 (15.9))
-- **Python 3.7.3** and MSVC v1916 (Windows 10, Visual C++ 2017 (15.9))
-- **Python 3.7.3** and GCC 6.3.0 (Raspbian)
 
 ## Basic Usage
 

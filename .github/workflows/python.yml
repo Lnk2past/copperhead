@@ -1,0 +1,48 @@
+name: Build
+
+on: [push]
+
+jobs:
+  build-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 2
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        python-version: [3.6, 3.7]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Copperhead
+      run: |
+        python setup.py install
+    - name: Tests
+      run: |
+        python examples/basics.py
+        python examples/strings.py
+        python examples/stl_sequence_containers.py
+        python examples/stl_container_adapters.py
+        python examples/file.py
+        python examples/fractal.py
+  build-dist:
+    needs: build-tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    steps:
+    - name: Build Distribution
+      run: |
+        pip install wheel
+        python setup.py sdist bdist_wheel
+  publish:
+    needs: build-dist
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    steps:
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@v1.0.0a0
+      with:
+        user: __token__
+        password: ${{ secrets.sneaky_copperhead }}

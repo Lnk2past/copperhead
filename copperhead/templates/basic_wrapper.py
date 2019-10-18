@@ -20,17 +20,16 @@ PyObject* py_{block_name}(PyObject*, PyObject* args)
     catch (std::runtime_error &e)
     {{
         PyErr_SetString({block_name}Error, e.what());
-        return nullptr;
     }}
     catch (...)
     {{
         PyErr_SetString({block_name}Error, "Unknown error");
-        return nullptr;
     }}
     if (PyErr_Occurred())
     {{
         PyErr_Print();
     }}
+    Py_RETURN_NONE;
 }}
 
 // create the methods array
