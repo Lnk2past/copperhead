@@ -60,8 +60,7 @@ def generate(block_name, block_signature, block=None, block_file=None, config={}
         setup = this_cache_dir / (block_name + '_setup.py')
         create_setup(str(setup), block_name, str(source), config)
 
-        if 'PYTHONPATH' not in os.environ:
-            os.environ['PYTHONPATH'] = ''
+        os.environ.setdefault('PYTHONPATH', '')
         os.environ['PYTHONPATH'] += '{}{}'.format(os.pathsep, this_cache_dir)
 
         setuptools.sandbox.run_setup(str(setup), args=['install', '--install-lib={}'.format(this_cache_dir)])

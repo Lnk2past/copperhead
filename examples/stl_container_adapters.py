@@ -45,18 +45,18 @@ print('')
 
 
 # # passing and returning a std::priority_queue
-# print('Test 3')
-# src = r'''
-# #include <iostream>
-# #include <numeric>
-# #include <queue>
-# std::priority_queue<int> priority_queue_test(std::priority_queue<int> v)
-# {
-#     v.pop();
-#     v.pop();
-#     v.push(42);
-#     return v;
-# }'''
-# priority_queue_test = cpp.generate('priority_queue_test', 'std::priority_queue<int>(std::priority_queue<int>)', src, config=config)
-# print(priority_queue_test([1, 2, 3, 4]))
-# print('')
+print('Test 3')
+src = r'''
+#include <iostream>
+#include <numeric>
+#include <queue>
+std::priority_queue<int> priority_queue_test(std::priority_queue<int> v)
+{
+    v.pop();
+    v.pop();
+    v.push(42);
+    return v;
+}'''
+priority_queue_test = cpp.generate('priority_queue_test', 'std::priority_queue<int>(std::priority_queue<int>)', src, config=config)
+print(priority_queue_test([1, 2, 3, 4]))
+print('')

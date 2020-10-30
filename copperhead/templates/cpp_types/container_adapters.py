@@ -56,7 +56,7 @@ auto pyvalue = PyList_GetItem({name}{layer_index}, i{layer_index});
 types = {
     'std::stack': ContainerAdapter('std::stack', '{variable}.emplace()', '{variable}.size()'),
     'std::queue': ContainerAdapter('std::queue', '{variable}.emplace()', '{variable}.size()'),
-    # 'std::priority_queue': ContainerAdapter('std::priority_queue', '{variable}.emplace()', '{variable}.size()'),
+    'std::priority_queue': ContainerAdapter('std::priority_queue', '{variable}.emplace()', '{variable}.size()'),
 }
 
 
@@ -86,19 +86,19 @@ types['std::queue'].from_python_list_template = queue_from_python_list_template
 types['std::queue'].to_python_list_template = queue_to_python_list_template
 
 
-# priority_queue_from_python_list_template = r'''
-# // iterate across the list, current layer={layer_index} (empty means 1st)
-# for (Py_ssize_t i{layer_index} {{PyList_Size({name}{layer_index}) - 1}}; i{layer_index} >= 0; i{layer_index}--)
-# {{
-#     {insertion_function};
-#     auto {name}_container{next_layer_index} = {name}_container{layer_index}.top();
-#     <next_layer>
-# }}
-# '''
+priority_queue_from_python_list_template = r'''
+// iterate across the list, current layer={layer_index} (empty means 1st)
+for (Py_ssize_t i{layer_index} {{PyList_Size({name}{layer_index}) - 1}}; i{layer_index} >= 0; i{layer_index}--)
+{{
+    {insertion_function};
+    auto {name}_container{next_layer_index} = {name}_container{layer_index}.top();
+    <next_layer>
+}}
+'''
 
-# priority_queue_from_python_list_inner_template = r'''
-# PyObject *pyvalue = PyList_GetItem({name}{layer_index}, i{layer_index});
-# {name}_container{next_layer_index} = {from_python_function}(pyvalue);
-# '''
-# types['std::priority_queue'].from_python_list_template = priority_queue_from_python_list_template
-# types['std::priority_queue'].from_python_list_inner_template = priority_queue_from_python_list_inner_template
+priority_queue_from_python_list_inner_template = r'''
+PyObject *pyvalue = PyList_GetItem({name}{layer_index}, i{layer_index});
+{name}_container{next_layer_index} = {from_python_function}(pyvalue);
+'''
+types['std::priority_queue'].from_python_list_template = priority_queue_from_python_list_template
+types['std::priority_queue'].from_python_list_inner_template = priority_queue_from_python_list_inner_template
