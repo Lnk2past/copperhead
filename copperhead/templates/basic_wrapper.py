@@ -33,7 +33,7 @@ PyObject* py_{block_name}(PyObject*, PyObject* args)
 }}
 
 // create the methods array
-static PyMethodDef {block_name}Methods[]
+static PyMethodDef {block_name}Methods[2]
 {{
     {{"{block_name}",  py_{block_name}, METH_VARARGS, nullptr}},
     {{nullptr, nullptr, 0, nullptr}}
